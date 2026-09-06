@@ -24,6 +24,9 @@ jobs:
         with:
           channel: 'stable'
  
+      - name: Générer les dossiers Android manquants
+        run: flutter create --platforms=android --org com.cervixhealth .
+ 
       - name: Installer les dépendances du projet
         run: flutter pub get
  
