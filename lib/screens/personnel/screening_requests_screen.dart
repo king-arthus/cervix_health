@@ -3,8 +3,8 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../localization/translator.dart';
 import '../../models/screening_models.dart';
+import '../../models/user_model.dart';
 import '../../services/app_data.dart';
-
 import '../../widgets/empty_state.dart';
 
 class ScreeningRequestsScreen extends StatelessWidget {
@@ -16,7 +16,11 @@ class ScreeningRequestsScreen extends StatelessWidget {
         return Colors.orange;
       case ScreeningStatus.planifie:
         return Colors.blue;
-      case ScreeningStatus.realise:
+      case ScreeningStatus.depiste:
+        return Colors.purple;
+      case ScreeningStatus.oriente:
+        return Colors.teal;
+      case ScreeningStatus.valide:
         return Colors.green;
       case ScreeningStatus.annule:
         return Colors.grey;
@@ -76,25 +80,43 @@ class ScreeningRequestDetailScreen extends StatefulWidget {
 }
 
 class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScreen> {
-  late ScreeningStatus _status;
-  late TextEditingController _technique;
-  late TextEditingController _result;
+  late TextEditingController _observations;
+  late TextEditingController _conclusion;
+  String? _viaResult;
+  String? _viliResult;
+  String? _selectedSpecialistId;
   DateTime? _nextAppointment;
+  bool _saving = false;
+
+  static const _resultOptions = ['positif', 'negatif', 'douteux'];
 
   @override
   void initState() {
     super.initState();
-    _status = widget.request.status;
-    _technique = TextEditingController(text: widget.request.techniqueUsed ?? '');
-    _result = TextEditingController(text: widget.request.result ?? '');
+    _observations = TextEditingController(text: widget.request.observations ?? '');
+    _conclusion = TextEditingController(text: widget.request.conclusion ?? '');
+    _viaResult = widget.request.viaResult;
+    _viliResult = widget.request.viliResult;
+    _selectedSpecialistId = widget.request.specialistId;
     _nextAppointment = widget.request.nextAppointmentDate;
   }
 
   @override
   void dispose() {
-    _technique.dispose();
-    _result.dispose();
+    _observations.dispose();
+    _conclusion.dispose();
     super.dispose();
+  }
+
+  String _resultLabel(String key) {
+    switch (key) {
+      case 'positif':
+        return context.t('result_positive');
+      case 'negatif':
+        return context.t('result_negative');
+      default:
+        return context.t('result_doubtful');
+    }
   }
 
   Future<void> _pickDate() async {
@@ -107,19 +129,52 @@ class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScr
     if (picked != null) setState(() => _nextAppointment = picked);
   }
 
-  Future<void> _save() async {
-    final updated = widget.request;
-    updated.status = _status;
-    updated.techniqueUsed = _technique.text.trim();
-    updated.result = _result.text.trim();
-    updated.nextAppointmentDate = _nextAppointment;
-    await context.read<AppData>().updateScreeningRequest(updated);
-    if (mounted) Navigator.pop(context);
+  Future<void> _saveScreening() async {
+    if (_viaResult == null || _viliResult == null) return;
+    setState(() => _saving = true);
+    final appData = context.read<AppData>();
+    final agent = appData.currentUser;
+    if (agent == null) return;
+    widget.request.nextAppointmentDate = _nextAppointment;
+    await appData.submitScreeningByAgent(
+      request: widget.request,
+      agent: agent,
+      viaResult: _viaResult!,
+      viliResult: _viliResult!,
+      observations: _observations.text.trim(),
+    );
+    setState(() => _saving = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.t('screening_saved'))));
+    }
+  }
+
+  Future<void> _refer() async {
+    if (_selectedSpecialistId == null) return;
+    final appData = context.read<AppData>();
+    AppUser? specialist;
+    try {
+      specialist = appData.specialisteList.firstWhere((s) => s.id == _selectedSpecialistId);
+    } catch (_) {
+      specialist = null;
+    }
+    if (specialist == null) return;
+    setState(() => _saving = true);
+    await appData.referToSpecialist(request: widget.request, specialist: specialist);
+    setState(() => _saving = false);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.t('referred_to_specialist'))));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat.yMMMd(context.watch<AppData>().localeCode);
+    final appData = context.watch<AppData>();
+    final dateFormat = DateFormat.yMMMd(appData.localeCode);
+    final specialists = appData.specialisteList;
+    final canRefer = widget.request.status == ScreeningStatus.depiste ||
+        widget.request.status == ScreeningStatus.oriente;
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.request.patientName)),
       body: SingleChildScrollView(
@@ -128,41 +183,35 @@ class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScr
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(widget.request.hospital, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Chip(label: Text(screeningStatusLabel(widget.request.status, context.t))),
             const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(context.t('ai_analysis_placeholder'))),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            DropdownButtonFormField<ScreeningStatus>(
-              value: _status,
-              decoration:
-                  InputDecoration(labelText: context.t('select_status'), border: const OutlineInputBorder()),
-              items: ScreeningStatus.values
-                  .map((s) => DropdownMenuItem(value: s, child: Text(screeningStatusLabel(s, context.t))))
+
+            Text(context.t('screening_section_title'), style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              value: _viaResult,
+              decoration: InputDecoration(labelText: context.t('via_result'), border: const OutlineInputBorder()),
+              items: _resultOptions
+                  .map((r) => DropdownMenuItem(value: r, child: Text(_resultLabel(r))))
                   .toList(),
-              onChanged: (v) => setState(() => _status = v ?? _status),
+              onChanged: (v) => setState(() => _viaResult = v),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _viliResult,
+              decoration: InputDecoration(labelText: context.t('vili_result'), border: const OutlineInputBorder()),
+              items: _resultOptions
+                  .map((r) => DropdownMenuItem(value: r, child: Text(_resultLabel(r))))
+                  .toList(),
+              onChanged: (v) => setState(() => _viliResult = v),
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _technique,
+              controller: _observations,
+              maxLines: 3,
               decoration:
-                  InputDecoration(labelText: context.t('technique_used'), border: const OutlineInputBorder()),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _result,
-              decoration: InputDecoration(labelText: context.t('result_label'), border: const OutlineInputBorder()),
+                  InputDecoration(labelText: context.t('observations'), border: const OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -172,12 +221,52 @@ class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScr
               trailing: const Icon(Icons.calendar_month),
               onTap: _pickDate,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: _save,
+              onPressed: (_viaResult == null || _viliResult == null || _saving) ? null : _saveScreening,
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
               child: Text(context.t('save')),
             ),
+
+            const Divider(height: 40),
+
+            Text(context.t('refer_to_specialist'), style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 12),
+            if (specialists.isEmpty)
+              Text(context.t('no_specialist_available'))
+            else ...[
+              DropdownButtonFormField<String>(
+                value: _selectedSpecialistId,
+                decoration:
+                    InputDecoration(labelText: context.t('select_specialist'), border: const OutlineInputBorder()),
+                items: specialists
+                    .map((s) => DropdownMenuItem(
+                        value: s.id, child: Text('${s.fullName}${s.specialty != null ? " — ${s.specialty}" : ""}')))
+                    .toList(),
+                onChanged: canRefer ? (v) => setState(() => _selectedSpecialistId = v) : null,
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: (!canRefer || _selectedSpecialistId == null || _saving) ? null : _refer,
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                child: Text(context.t('refer_to_specialist')),
+              ),
+            ],
+
+            if (widget.request.conclusion != null && widget.request.conclusion!.isNotEmpty) ...[
+              const Divider(height: 40),
+              Text(context.t('specialist_conclusion'), style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(widget.request.conclusion!),
+              ),
+            ],
           ],
         ),
       ),

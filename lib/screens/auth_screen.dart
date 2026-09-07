@@ -5,15 +5,30 @@ import '../models/user_model.dart';
 import '../services/app_data.dart';
 import 'patient/patient_home_screen.dart';
 import 'personnel/personnel_home_screen.dart';
+import 'specialiste/specialiste_home_screen.dart';
+import 'admin/admin_home_screen.dart';
 import 'forgot_password_screen.dart';
 
 bool _isValidEmail(String value) {
   return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim());
 }
 
+String _roleLabelKey(UserRole role) {
+  switch (role) {
+    case UserRole.patient:
+      return 'profile_patient';
+    case UserRole.agent:
+      return 'profile_agent';
+    case UserRole.specialiste:
+      return 'profile_specialiste';
+    case UserRole.admin:
+      return 'profile_admin';
+  }
+}
+
 class AuthScreen extends StatefulWidget {
-  final ProfileType profileType;
-  const AuthScreen({super.key, required this.profileType});
+  final UserRole role;
+  const AuthScreen({super.key, required this.role});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -36,10 +51,9 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    final isPatient = widget.profileType == ProfileType.patient;
     return Scaffold(
       appBar: AppBar(
-        title: Text(isPatient ? context.t('profile_patient') : context.t('profile_personnel')),
+        title: Text(context.t(_roleLabelKey(widget.role))),
         bottom: TabBar(
           controller: _tabController,
           tabs: [
@@ -51,8 +65,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       body: TabBarView(
         controller: _tabController,
         children: [
-          _LoginForm(profileType: widget.profileType),
-          _SignupForm(profileType: widget.profileType),
+          _LoginForm(role: widget.role),
+          _SignupForm(role: widget.role),
         ],
       ),
     );
@@ -60,18 +74,30 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 }
 
 void _goToHome(BuildContext context, AppUser user) {
+  Widget target;
+  switch (user.role) {
+    case UserRole.patient:
+      target = const PatientHomeScreen();
+      break;
+    case UserRole.agent:
+      target = const PersonnelHomeScreen();
+      break;
+    case UserRole.specialiste:
+      target = const SpecialisteHomeScreen();
+      break;
+    case UserRole.admin:
+      target = const AdminHomeScreen();
+      break;
+  }
   Navigator.of(context).pushAndRemoveUntil(
-    MaterialPageRoute(
-      builder: (_) =>
-          user.profileType == ProfileType.patient ? const PatientHomeScreen() : const PersonnelHomeScreen(),
-    ),
+    MaterialPageRoute(builder: (_) => target),
     (route) => false,
   );
 }
 
 class _LoginForm extends StatefulWidget {
-  final ProfileType profileType;
-  const _LoginForm({required this.profileType});
+  final UserRole role;
+  const _LoginForm({required this.role});
 
   @override
   State<_LoginForm> createState() => _LoginFormState();
@@ -91,7 +117,7 @@ class _LoginFormState extends State<_LoginForm> {
       _errorKey = null;
     });
     final appData = context.read<AppData>();
-    final result = await appData.login(_email.text.trim(), _password.text, widget.profileType);
+    final result = await appData.login(_email.text.trim(), _password.text, widget.role);
     setState(() => _loading = false);
     if (!mounted) return;
     if (!result.success || result.user == null) {
@@ -159,8 +185,8 @@ class _LoginFormState extends State<_LoginForm> {
 }
 
 class _SignupForm extends StatefulWidget {
-  final ProfileType profileType;
-  const _SignupForm({required this.profileType});
+  final UserRole role;
+  const _SignupForm({required this.role});
 
   @override
   State<_SignupForm> createState() => _SignupFormState();
@@ -179,11 +205,13 @@ class _SignupFormState extends State<_SignupForm> {
   final _startYear = TextEditingController();
   final _position = TextEditingController();
   final _educationLevel = TextEditingController();
+  final _specialty = TextEditingController();
   String _gender = 'female';
   String? _errorKey;
   bool _loading = false;
 
-  bool get _isPersonnel => widget.profileType == ProfileType.personnel;
+  bool get _isAgent => widget.role == UserRole.agent;
+  bool get _isSpecialiste => widget.role == UserRole.specialiste;
 
   @override
   void dispose() {
@@ -199,6 +227,7 @@ class _SignupFormState extends State<_SignupForm> {
       _startYear,
       _position,
       _educationLevel,
+      _specialty,
     ]) {
       c.dispose();
     }
@@ -224,11 +253,12 @@ class _SignupFormState extends State<_SignupForm> {
       age: int.tryParse(_age.text.trim()) ?? 0,
       gender: _gender,
       contact: _contact.text.trim(),
-      profileType: widget.profileType,
-      employerFacility: _isPersonnel ? _employerFacility.text.trim() : null,
-      startYear: _isPersonnel ? int.tryParse(_startYear.text.trim()) : null,
-      position: _isPersonnel ? _position.text.trim() : null,
-      educationLevel: _isPersonnel ? _educationLevel.text.trim() : null,
+      role: widget.role,
+      employerFacility: (_isAgent || _isSpecialiste) ? _employerFacility.text.trim() : null,
+      startYear: (_isAgent || _isSpecialiste) ? int.tryParse(_startYear.text.trim()) : null,
+      position: _isAgent ? _position.text.trim() : null,
+      educationLevel: _isAgent ? _educationLevel.text.trim() : null,
+      specialty: _isSpecialiste ? _specialty.text.trim() : null,
     );
     setState(() => _loading = false);
     if (!mounted) return;
@@ -285,11 +315,16 @@ class _SignupFormState extends State<_SignupForm> {
               ),
             ),
             _field(_contact, 'contact', type: TextInputType.phone),
-            if (_isPersonnel) ...[
+            if (_isAgent) ...[
               _field(_employerFacility, 'employer_facility'),
               _field(_startYear, 'start_year', type: TextInputType.number, numeric: true),
               _field(_position, 'position'),
               _field(_educationLevel, 'education_level'),
+            ],
+            if (_isSpecialiste) ...[
+              _field(_employerFacility, 'employer_facility'),
+              _field(_startYear, 'start_year', type: TextInputType.number, numeric: true),
+              _field(_specialty, 'specialty'),
             ],
             if (_errorKey != null) ...[
               Text(context.t(_errorKey!), style: const TextStyle(color: Colors.red)),

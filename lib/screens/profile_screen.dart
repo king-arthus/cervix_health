@@ -142,9 +142,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _infoRow(context, Icons.alternate_email, user.email),
           _infoRow(context, Icons.cake_outlined, '${user.age}'),
           _infoRow(context, Icons.phone_outlined, user.contact),
-          if (user.profileType == ProfileType.personnel) ...[
+          if (user.role == UserRole.agent || user.role == UserRole.specialiste) ...[
             if (user.employerFacility != null) _infoRow(context, Icons.local_hospital_outlined, user.employerFacility!),
             if (user.position != null) _infoRow(context, Icons.badge_outlined, user.position!),
+            if (user.specialty != null) _infoRow(context, Icons.biotech_outlined, user.specialty!),
           ],
         ],
       ),

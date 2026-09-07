@@ -1,4 +1,4 @@
-enum ScreeningStatus { enAttente, planifie, realise, annule }
+enum ScreeningStatus { enAttente, planifie, depiste, oriente, valide, annule }
 
 String screeningStatusLabel(ScreeningStatus status, String Function(String) t) {
   switch (status) {
@@ -6,39 +6,63 @@ String screeningStatusLabel(ScreeningStatus status, String Function(String) t) {
       return t('status_pending');
     case ScreeningStatus.planifie:
       return t('status_scheduled');
-    case ScreeningStatus.realise:
-      return t('status_done');
+    case ScreeningStatus.depiste:
+      return t('status_screened');
+    case ScreeningStatus.oriente:
+      return t('status_referred');
+    case ScreeningStatus.valide:
+      return t('status_validated');
     case ScreeningStatus.annule:
       return t('status_cancelled');
   }
 }
 
+/// Représente le dossier de dépistage d'une patiente, de sa création par la
+/// patiente jusqu'à la validation par un spécialiste, en passant par la
+/// réalisation du dépistage par un agent de santé.
 class ScreeningRequest {
   final String id;
   final String patientId;
   final String patientName;
   final String hospital;
-  final String? assignedPersonnelId;
   final DateTime requestDate;
   ScreeningStatus status;
 
-  // Renseignés une fois le dépistage réalisé (côté personnel)
-  String? techniqueUsed;
-  String? result; // positif / négatif / douteux -> saisi manuellement pour l'instant
   DateTime? nextAppointmentDate;
-  // NOTE: l'analyse assistée par IA des images VIA/VILI sera ajoutée ultérieurement.
+
+  // Renseigné par l'agent de santé lors du dépistage
+  String? agentId;
+  String? agentName;
+  String? viaResult; // positif / négatif / douteux
+  String? viliResult; // positif / négatif / douteux
+  String? observations;
+
+  // Renseigné lors de l'orientation vers un spécialiste
+  String? specialistId;
+  String? specialistName;
+
+  // Renseigné par le spécialiste lors de la validation
+  String? conclusion;
+  DateTime? validationDate;
+  // NOTE : l'analyse assistée par IA des images VIA/VILI sera ajoutée ultérieurement.
 
   ScreeningRequest({
     required this.id,
     required this.patientId,
     required this.patientName,
     required this.hospital,
-    this.assignedPersonnelId,
     required this.requestDate,
     this.status = ScreeningStatus.enAttente,
-    this.techniqueUsed,
-    this.result,
     this.nextAppointmentDate,
+    this.agentId,
+    this.agentName,
+    this.viaResult,
+    this.viliResult,
+    this.observations,
+    this.specialistId,
+    this.specialistName,
+    this.conclusion,
+    this.validationDate,
   });
 
   Map<String, dynamic> toJson() => {
@@ -46,12 +70,18 @@ class ScreeningRequest {
         'patientId': patientId,
         'patientName': patientName,
         'hospital': hospital,
-        'assignedPersonnelId': assignedPersonnelId,
         'requestDate': requestDate.toIso8601String(),
         'status': status.name,
-        'techniqueUsed': techniqueUsed,
-        'result': result,
         'nextAppointmentDate': nextAppointmentDate?.toIso8601String(),
+        'agentId': agentId,
+        'agentName': agentName,
+        'viaResult': viaResult,
+        'viliResult': viliResult,
+        'observations': observations,
+        'specialistId': specialistId,
+        'specialistName': specialistName,
+        'conclusion': conclusion,
+        'validationDate': validationDate?.toIso8601String(),
       };
 
   factory ScreeningRequest.fromJson(Map<String, dynamic> json) => ScreeningRequest(
@@ -59,15 +89,21 @@ class ScreeningRequest {
         patientId: json['patientId'],
         patientName: json['patientName'],
         hospital: json['hospital'],
-        assignedPersonnelId: json['assignedPersonnelId'],
         requestDate: DateTime.parse(json['requestDate']),
         status: ScreeningStatus.values.firstWhere((e) => e.name == json['status'],
             orElse: () => ScreeningStatus.enAttente),
-        techniqueUsed: json['techniqueUsed'],
-        result: json['result'],
         nextAppointmentDate: json['nextAppointmentDate'] != null
             ? DateTime.parse(json['nextAppointmentDate'])
             : null,
+        agentId: json['agentId'],
+        agentName: json['agentName'],
+        viaResult: json['viaResult'] ?? json['result'],
+        viliResult: json['viliResult'],
+        observations: json['observations'],
+        specialistId: json['specialistId'],
+        specialistName: json['specialistName'],
+        conclusion: json['conclusion'],
+        validationDate: json['validationDate'] != null ? DateTime.parse(json['validationDate']) : null,
       );
 }
 

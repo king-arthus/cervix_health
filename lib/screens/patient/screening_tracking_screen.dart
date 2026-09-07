@@ -49,7 +49,11 @@ class _ScreeningTrackingScreenState extends State<ScreeningTrackingScreen> {
         return Colors.orange;
       case ScreeningStatus.planifie:
         return Colors.blue;
-      case ScreeningStatus.realise:
+      case ScreeningStatus.depiste:
+        return Colors.purple;
+      case ScreeningStatus.oriente:
+        return Colors.teal;
+      case ScreeningStatus.valide:
         return Colors.green;
       case ScreeningStatus.annule:
         return Colors.grey;
@@ -99,10 +103,21 @@ class _ScreeningTrackingScreenState extends State<ScreeningTrackingScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text('${context.t('date_label')} : ${dateFormat.format(r.requestDate)}'),
-                        if (r.techniqueUsed != null && r.techniqueUsed!.isNotEmpty)
-                          Text('${context.t('technique_used')} : ${r.techniqueUsed}'),
-                        if (r.result != null && r.result!.isNotEmpty)
-                          Text('${context.t('result_label')} : ${r.result}'),
+                        if (r.viaResult != null) Text('VIA : ${r.viaResult}'),
+                        if (r.viliResult != null) Text('VILI : ${r.viliResult}'),
+                        if (r.conclusion != null && r.conclusion!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text('${context.t('specialist_conclusion')} : ${r.conclusion}'),
+                            ),
+                          ),
                         if (r.nextAppointmentDate != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),

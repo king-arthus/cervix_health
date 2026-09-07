@@ -6,6 +6,8 @@ import 'services/notification_service.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/patient/patient_home_screen.dart';
 import 'screens/personnel/personnel_home_screen.dart';
+import 'screens/specialiste/specialiste_home_screen.dart';
+import 'screens/admin/admin_home_screen.dart';
 import 'models/user_model.dart';
 
 void main() {
@@ -55,10 +57,21 @@ class _CervixHealthAppState extends State<CervixHealthApp> {
     Widget home;
     if (appData.currentUser == null) {
       home = const WelcomeScreen();
-    } else if (appData.currentUser!.profileType == ProfileType.patient) {
-      home = const PatientHomeScreen();
     } else {
-      home = const PersonnelHomeScreen();
+      switch (appData.currentUser!.role) {
+        case UserRole.patient:
+          home = const PatientHomeScreen();
+          break;
+        case UserRole.agent:
+          home = const PersonnelHomeScreen();
+          break;
+        case UserRole.specialiste:
+          home = const SpecialisteHomeScreen();
+          break;
+        case UserRole.admin:
+          home = const AdminHomeScreen();
+          break;
+      }
     }
 
     return MaterialApp(

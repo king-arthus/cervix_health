@@ -7,8 +7,8 @@ import '../../services/app_data.dart';
 import '../../widgets/empty_state.dart';
 import 'screening_requests_screen.dart';
 
-/// Vue de suivi centrée sur les patientes déjà dépistées ou planifiées
-/// (technique utilisée, résultat obtenu, date du prochain rendez-vous).
+/// Vue de suivi centrée sur les patientes déjà dépistées, orientées ou dont
+/// le dossier a été validé par un spécialiste.
 class PatientTrackingScreen extends StatelessWidget {
   const PatientTrackingScreen({super.key});
 
@@ -16,7 +16,11 @@ class PatientTrackingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appData = context.watch<AppData>();
     final tracked = appData.allRequests
-        .where((r) => r.status == ScreeningStatus.realise || r.status == ScreeningStatus.planifie)
+        .where((r) =>
+            r.status == ScreeningStatus.depiste ||
+            r.status == ScreeningStatus.oriente ||
+            r.status == ScreeningStatus.valide ||
+            r.status == ScreeningStatus.planifie)
         .toList();
     final dateFormat = DateFormat.yMMMd(appData.localeCode);
 
@@ -40,13 +44,25 @@ class PatientTrackingScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(r.patientName, style: Theme.of(context).textTheme.titleMedium),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(r.patientName, style: Theme.of(context).textTheme.titleMedium),
+                            ),
+                            Chip(
+                              label: Text(screeningStatusLabel(r.status, context.t),
+                                  style: const TextStyle(fontSize: 11)),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 4),
                         Text(r.hospital),
-                        if (r.techniqueUsed != null && r.techniqueUsed!.isNotEmpty)
-                          Text('${context.t('technique_used')} : ${r.techniqueUsed}'),
-                        if (r.result != null && r.result!.isNotEmpty)
-                          Text('${context.t('result_label')} : ${r.result}'),
+                        if (r.viaResult != null) Text('VIA : ${r.viaResult}'),
+                        if (r.viliResult != null) Text('VILI : ${r.viliResult}'),
+                        if (r.specialistName != null)
+                          Text('${context.t('select_specialist')} : ${r.specialistName}'),
+                        if (r.conclusion != null && r.conclusion!.isNotEmpty)
+                          Text('${context.t('specialist_conclusion')} : ${r.conclusion}'),
                         if (r.nextAppointmentDate != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),

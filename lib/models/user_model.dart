@@ -1,7 +1,16 @@
-enum ProfileType { patient, personnel }
+enum UserRole { patient, agent, specialiste, admin }
 
-ProfileType profileTypeFromString(String value) {
-  return value == 'personnel' ? ProfileType.personnel : ProfileType.patient;
+UserRole userRoleFromString(String value) {
+  switch (value) {
+    case 'agent':
+      return UserRole.agent;
+    case 'specialiste':
+      return UserRole.specialiste;
+    case 'admin':
+      return UserRole.admin;
+    default:
+      return UserRole.patient;
+  }
 }
 
 class AppUser {
@@ -12,13 +21,14 @@ class AppUser {
   final int age;
   final String gender;
   final String contact;
-  final ProfileType profileType;
+  final UserRole role;
 
-  // Champs spécifiques au personnel de santé
+  // Champs spécifiques à l'agent de santé et au spécialiste
   final String? employerFacility;
   final int? startYear;
   final String? position;
   final String? educationLevel;
+  final String? specialty; // spécifique au spécialiste (ex. anatomopathologie, gynécologie)
   final String? photoBase64;
 
   AppUser({
@@ -29,11 +39,12 @@ class AppUser {
     required this.age,
     required this.gender,
     required this.contact,
-    required this.profileType,
+    required this.role,
     this.employerFacility,
     this.startYear,
     this.position,
     this.educationLevel,
+    this.specialty,
     this.photoBase64,
   });
 
@@ -46,11 +57,12 @@ class AppUser {
         age: age,
         gender: gender,
         contact: contact,
-        profileType: profileType,
+        role: role,
         employerFacility: employerFacility,
         startYear: startYear,
         position: position,
         educationLevel: educationLevel,
+        specialty: specialty,
         photoBase64: newPhotoBase64,
       );
 
@@ -64,11 +76,12 @@ class AppUser {
         'age': age,
         'gender': gender,
         'contact': contact,
-        'profileType': profileType.name,
+        'role': role.name,
         'employerFacility': employerFacility,
         'startYear': startYear,
         'position': position,
         'educationLevel': educationLevel,
+        'specialty': specialty,
         'photoBase64': photoBase64,
       };
 
@@ -80,11 +93,12 @@ class AppUser {
         age: json['age'],
         gender: json['gender'],
         contact: json['contact'],
-        profileType: profileTypeFromString(json['profileType']),
+        role: userRoleFromString(json['role'] ?? json['profileType'] ?? 'patient'),
         employerFacility: json['employerFacility'],
         startYear: json['startYear'],
         position: json['position'],
         educationLevel: json['educationLevel'],
+        specialty: json['specialty'],
         photoBase64: json['photoBase64'],
       );
 }

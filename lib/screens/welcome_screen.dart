@@ -97,7 +97,7 @@ class WelcomeScreen extends StatelessWidget {
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const AuthScreen(profileType: ProfileType.patient),
+                            builder: (_) => const AuthScreen(role: UserRole.patient),
                           ),
                         ),
                       ),
@@ -107,12 +107,27 @@ class WelcomeScreen extends StatelessWidget {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         icon: const Icon(Icons.medical_services_outlined),
-                        label: Text(context.t('profile_personnel')),
+                        label: Text(context.t('profile_agent')),
                         style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                         onPressed: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const AuthScreen(profileType: ProfileType.personnel),
+                            builder: (_) => const AuthScreen(role: UserRole.agent),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.biotech_outlined),
+                        label: Text(context.t('profile_specialiste')),
+                        style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AuthScreen(role: UserRole.specialiste),
                           ),
                         ),
                       ),
