@@ -9,6 +9,9 @@ import 'screening_request_screen.dart';
 import 'screening_tracking_screen.dart';
 import 'messaging_screen.dart';
 import 'community_screen.dart';
+import '../profile_screen.dart';
+import '../news_screen.dart';
+import 'dart:convert';
 
 class PatientHomeScreen extends StatelessWidget {
   const PatientHomeScreen({super.key});
@@ -23,11 +26,26 @@ class PatientHomeScreen extends StatelessWidget {
       _ModuleTile(context.t('module_tracking'), Icons.timeline, const ScreeningTrackingScreen()),
       _ModuleTile(context.t('module_messaging'), Icons.chat_bubble_outline, const MessagingScreen()),
       _ModuleTile(context.t('module_community'), Icons.groups, const CommunityScreen()),
+      _ModuleTile(context.t('module_news'), Icons.newspaper, const NewsScreen()),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(user?.fullName ?? context.t('profile_patient')),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+            child: CircleAvatar(
+              backgroundImage: (user?.photoBase64 != null && user!.photoBase64!.isNotEmpty)
+                  ? MemoryImage(base64Decode(user.photoBase64!))
+                  : null,
+              child: (user?.photoBase64 == null || user!.photoBase64!.isEmpty)
+                  ? const Icon(Icons.person)
+                  : null,
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

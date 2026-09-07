@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../localization/translator.dart';
 import '../../models/screening_models.dart';
 import '../../services/app_data.dart';
+import '../../widgets/empty_state.dart';
 import 'screening_requests_screen.dart';
 
 /// Vue de suivi centrée sur les patientes déjà dépistées ou planifiées
@@ -22,7 +23,11 @@ class PatientTrackingScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.t('patient_tracking'))),
       body: tracked.isEmpty
-          ? Center(child: Text(context.t('no_requests_yet')))
+          ? EmptyState(
+              icon: Icons.medical_information_outlined,
+              title: context.t('no_requests_yet'),
+              subtitle: context.t('no_requests_yet_sub'),
+            )
           : ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: tracked.length,

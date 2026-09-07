@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'localization/app_strings.dart';
 import 'services/app_data.dart';
+import 'services/notification_service.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/patient/patient_home_screen.dart';
 import 'screens/personnel/personnel_home_screen.dart';
@@ -34,6 +35,8 @@ class _CervixHealthAppState extends State<CervixHealthApp> {
 
   Future<void> _init() async {
     await context.read<AppData>().init();
+    await NotificationService.init();
+    await NotificationService.requestPermission();
     setState(() => _ready = true);
   }
 

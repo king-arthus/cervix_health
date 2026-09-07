@@ -5,6 +5,8 @@ import '../../localization/translator.dart';
 import '../../models/user_model.dart';
 import '../../services/app_data.dart';
 
+import '../../widgets/empty_state.dart';
+
 class MessagingScreen extends StatelessWidget {
   const MessagingScreen({super.key});
 
@@ -18,7 +20,11 @@ class MessagingScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.t('messaging_title'))),
       body: conversations.isEmpty
-          ? Center(child: Text(context.t('no_conversations')))
+          ? EmptyState(
+              icon: Icons.chat_bubble_outline,
+              title: context.t('no_conversations'),
+              subtitle: context.t('no_conversations_sub'),
+            )
           : ListView.builder(
               itemCount: conversations.length,
               itemBuilder: (context, index) {

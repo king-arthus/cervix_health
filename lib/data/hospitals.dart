@@ -1,24 +1,42 @@
-/// Liste indicative des établissements de santé au Tchad pratiquant le dépistage
-/// du cancer du col de l'utérus, des hôpitaux provinciaux aux hôpitaux de référence.
-/// À remplacer/compléter par une source officielle (ministère de la Santé publique) en production.
-const List<String> chadScreeningHospitals = [
-  "Hôpital Général de Référence Nationale (HGRN) - N'Djaména",
-  "Hôpital de la Mère et de l'Enfant - N'Djaména",
-  "Hôpital Provincial de Moundou",
-  "Hôpital Provincial de Sarh",
-  "Hôpital Provincial d'Abéché",
-  "Hôpital Provincial de Doba",
-  "Hôpital Provincial de Bongor",
-  "Hôpital Provincial de Mongo",
-  "Hôpital Provincial d'Am Timan",
-  "Hôpital Provincial de Kélo",
-  "Hôpital Provincial de Pala",
-  "Hôpital Provincial de Laï",
-  "Hôpital Provincial de Faya-Largeau",
-  "Hôpital Régional de Bol",
-  "Centre Hospitalier Universitaire de Référence Nationale (CHU-RN)",
-  "Hôpital de l'Amitié Tchad-Chine",
-];
+/// Établissements de santé pratiquant le dépistage du cancer du col de l'utérus,
+/// organisés par pays. Listes indicatives, à valider/compléter auprès des
+/// ministères de la Santé publique concernés.
+const Map<String, List<String>> screeningHospitalsByCountry = {
+  'Tchad': [
+    "Hôpital Général de Référence Nationale (HGRN) - N'Djaména",
+    "Hôpital de la Mère et de l'Enfant - N'Djaména",
+    "Hôpital Provincial de Moundou",
+    "Hôpital Provincial de Sarh",
+    "Hôpital Provincial d'Abéché",
+    "Hôpital Provincial de Doba",
+    "Hôpital Provincial de Bongor",
+    "Hôpital Provincial de Mongo",
+    "Hôpital Provincial d'Am Timan",
+    "Hôpital Provincial de Kélo",
+    "Hôpital Provincial de Pala",
+    "Hôpital Provincial de Laï",
+    "Hôpital Provincial de Faya-Largeau",
+    "Hôpital Régional de Bol",
+    "Centre Hospitalier Universitaire de Référence Nationale (CHU-RN)",
+    "Hôpital de l'Amitié Tchad-Chine",
+  ],
+  'Cameroun': [
+    "Hôpital Central de Yaoundé",
+    "Hôpital Général de Douala",
+    "Hôpital Gynéco-Obstétrique et Pédiatrique de Yaoundé",
+    "Hôpital Laquintinie de Douala",
+    "Centre Hospitalier Universitaire (CHU) de Yaoundé",
+    "Hôpital Régional de Bafoussam",
+    "Hôpital Régional de Garoua",
+    "Hôpital Régional de Maroua",
+    "Hôpital Régional de Bamenda",
+    "Hôpital Régional de Buea",
+    "Hôpital Régional d'Ebolowa",
+    "Hôpital Régional de Ngaoundéré",
+    "Hôpital Régional de Bertoua",
+    "Hôpital Militaire de Région N°1 de Yaoundé",
+  ],
+};
 
 /// Liste des facteurs de risque courants du cancer du col de l'utérus,
 /// utilisée pour le calcul du ratio facteur d'exposition / facteur de risque.

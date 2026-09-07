@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../models/screening_models.dart';
+import 'firebase_auth_service.dart';
 
 /// Couche de persistance légère basée sur SharedPreferences.
 /// À remplacer par un vrai backend (Firebase, Supabase, API REST...) en production :
@@ -64,36 +65,75 @@ class AppData extends ChangeNotifier {
   Future<void> _savePosts() async =>
       _prefs?.setString(_kPosts, jsonEncode(posts.map((e) => e.toJson()).toList()));
 
-  // ---------------- Authentification ----------------
+  // ---------------- Authentification (Firebase Auth via API REST) ----------------
 
-  String? findErrorForSignup(String username, ProfileType type) {
-    final exists = users.any((u) => u.username.toLowerCase() == username.toLowerCase());
-    if (exists) return 'error_username_taken';
-    return null;
-  }
-
-  Future<AppUser> signUp(AppUser user) async {
+  Future<({bool success, AppUser? user, String? errorKey})> signUp({
+    required String email,
+    required String password,
+    required String firstName,
+    required String lastName,
+    required int age,
+    required String gender,
+    required String contact,
+    required ProfileType profileType,
+    String? employerFacility,
+    int? startYear,
+    String? position,
+    String? educationLevel,
+  }) async {
+    final result = await FirebaseAuthService.signUp(email: email, password: password);
+    if (!result.success || result.uid == null) {
+      return (success: false, user: null, errorKey: result.errorKey);
+    }
+    final user = AppUser(
+      id: result.uid!,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      age: age,
+      gender: gender,
+      contact: contact,
+      profileType: profileType,
+      employerFacility: employerFacility,
+      startYear: startYear,
+      position: position,
+      educationLevel: educationLevel,
+    );
     users.add(user);
     await _saveUsers();
     await _setSession(user);
-    return user;
+    return (success: true, user: user, errorKey: null);
   }
 
-  /// Retourne l'utilisateur si les identifiants correspondent, sinon null.
-  Future<AppUser?> login(String username, String password, ProfileType type) async {
+  /// Connecte l'utilisateur via Firebase Auth, puis retrouve (ou crée si absent
+  /// localement, ex. nouvel appareil) son profil dans le stockage local.
+  Future<({bool success, AppUser? user, String? errorKey})> login(
+    String email,
+    String password,
+    ProfileType type,
+  ) async {
+    final result = await FirebaseAuthService.signIn(email: email, password: password);
+    if (!result.success || result.uid == null) {
+      return (success: false, user: null, errorKey: result.errorKey);
+    }
     AppUser? match;
-    for (final u in users) {
-      if (u.username.toLowerCase() == username.toLowerCase() &&
-          u.password == password &&
-          u.profileType == type) {
-        match = u;
-        break;
-      }
+    try {
+      match = users.firstWhere((u) => u.id == result.uid && u.profileType == type);
+    } catch (_) {
+      match = null;
     }
-    if (match != null) {
-      await _setSession(match);
+    if (match == null) {
+      // Le compte existe côté Firebase mais pas encore de profil local pour ce type
+      // (ex. connexion depuis un nouvel appareil) : on ne peut pas deviner ses informations.
+      return (success: false, user: null, errorKey: 'error_profile_not_found');
     }
-    return match;
+    await _setSession(match);
+    return (success: true, user: match, errorKey: null);
+  }
+
+  Future<({bool success, String? errorKey})> sendPasswordResetEmail(String email) async {
+    final result = await FirebaseAuthService.sendPasswordResetEmail(email);
+    return (success: result.success, errorKey: result.errorKey);
   }
 
   Future<void> _setSession(AppUser user) async {
@@ -109,6 +149,19 @@ class AppData extends ChangeNotifier {
   }
 
   List<AppUser> get personnelList => users.where((u) => u.profileType == ProfileType.personnel).toList();
+
+  /// Met à jour la photo de profil (encodée en base64) de l'utilisateur courant.
+  /// Passer `null` pour retirer la photo.
+  Future<void> updateProfilePhoto(String? photoBase64) async {
+    final user = currentUser;
+    if (user == null) return;
+    final updated = user.copyWithPhoto(photoBase64);
+    final idx = users.indexWhere((u) => u.id == user.id);
+    if (idx != -1) users[idx] = updated;
+    currentUser = updated;
+    await _saveUsers();
+    notifyListeners();
+  }
 
   // ---------------- Dépistage ----------------
 

@@ -121,6 +121,14 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                'Application créée par BAKTARA DIDINA ARTHUS',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey),
+              ),
+            ),
           ],
         ),
       ),

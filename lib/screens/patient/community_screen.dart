@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../localization/translator.dart';
 import '../../services/app_data.dart';
 
+import '../../widgets/empty_state.dart';
+
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
 
@@ -58,7 +60,11 @@ class _CommunityScreenState extends State<CommunityScreen> {
           const Divider(height: 1),
           Expanded(
             child: posts.isEmpty
-                ? Center(child: Text(context.t('no_posts_yet')))
+                ? EmptyState(
+                    icon: Icons.groups_outlined,
+                    title: context.t('no_posts_yet'),
+                    subtitle: context.t('no_posts_yet_sub'),
+                  )
                 : ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount: posts.length,

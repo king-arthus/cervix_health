@@ -16,18 +16,22 @@ class ScreeningRequestScreen extends StatefulWidget {
 class _ScreeningRequestScreenState extends State<ScreeningRequestScreen> {
   final _searchController = TextEditingController();
   String _query = '';
+  String? _selectedCountry;
   String? _selectedHospital;
 
-  List<String> get _filteredHospitals => chadScreeningHospitals
-      .where((h) => h.toLowerCase().contains(_query.toLowerCase()))
-      .toList();
+  List<String> get _hospitalsForCountry {
+    if (_selectedCountry == null) return [];
+    final list = screeningHospitalsByCountry[_selectedCountry] ?? [];
+    return list.where((h) => h.toLowerCase().contains(_query.toLowerCase())).toList();
+  }
 
   Future<void> _sendRequest() async {
-    if (_selectedHospital == null) return;
+    if (_selectedHospital == null || _selectedCountry == null) return;
     final appData = context.read<AppData>();
     final user = appData.currentUser;
     if (user == null) return;
-    await appData.createScreeningRequest(patient: user, hospital: _selectedHospital!);
+    final hospitalWithCountry = '$_selectedHospital — $_selectedCountry';
+    await appData.createScreeningRequest(patient: user, hospital: hospitalWithCountry);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(context.t('request_sent'))));
     Navigator.pop(context);
@@ -36,39 +40,58 @@ class _ScreeningRequestScreenState extends State<ScreeningRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final personnelList = context.watch<AppData>().personnelList;
+    final countries = screeningHospitalsByCountry.keys.toList();
 
     return Scaffold(
       appBar: AppBar(title: Text(context.t('screening_request_title'))),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: context.t('search_hospital'),
-                prefixIcon: const Icon(Icons.search),
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (v) => setState(() => _query = v),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: DropdownButtonFormField<String>(
+              value: _selectedCountry,
+              decoration:
+                  InputDecoration(labelText: context.t('select_country'), border: const OutlineInputBorder()),
+              items: countries
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) => setState(() {
+                _selectedCountry = v;
+                _selectedHospital = null;
+              }),
             ),
           ),
+          if (_selectedCountry != null)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  labelText: context.t('search_hospital'),
+                  prefixIcon: const Icon(Icons.search),
+                  border: const OutlineInputBorder(),
+                ),
+                onChanged: (v) => setState(() => _query = v),
+              ),
+            ),
           Expanded(
             child: ListView(
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Text(context.t('select_hospital'), style: Theme.of(context).textTheme.titleSmall),
-                ),
-                ..._filteredHospitals.map(
-                  (h) => RadioListTile<String>(
-                    title: Text(h),
-                    value: h,
-                    groupValue: _selectedHospital,
-                    onChanged: (v) => setState(() => _selectedHospital = v),
+                if (_selectedCountry != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Text(context.t('select_hospital'), style: Theme.of(context).textTheme.titleSmall),
                   ),
-                ),
-                const Divider(),
+                  ..._hospitalsForCountry.map(
+                    (h) => RadioListTile<String>(
+                      title: Text(h),
+                      value: h,
+                      groupValue: _selectedHospital,
+                      onChanged: (v) => setState(() => _selectedHospital = v),
+                    ),
+                  ),
+                  const Divider(),
+                ],
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: Text(context.t('search_personnel'), style: Theme.of(context).textTheme.titleSmall),

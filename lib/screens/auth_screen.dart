@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:uuid/uuid.dart';
 import '../localization/translator.dart';
 import '../models/user_model.dart';
 import '../services/app_data.dart';
 import 'patient/patient_home_screen.dart';
 import 'personnel/personnel_home_screen.dart';
+import 'forgot_password_screen.dart';
+
+bool _isValidEmail(String value) {
+  return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim());
+}
 
 class AuthScreen extends StatefulWidget {
   final ProfileType profileType;
@@ -75,7 +79,7 @@ class _LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
-  final _username = TextEditingController();
+  final _email = TextEditingController();
   final _password = TextEditingController();
   String? _errorKey;
   bool _loading = false;
@@ -87,13 +91,13 @@ class _LoginFormState extends State<_LoginForm> {
       _errorKey = null;
     });
     final appData = context.read<AppData>();
-    final user = await appData.login(_username.text.trim(), _password.text, widget.profileType);
+    final result = await appData.login(_email.text.trim(), _password.text, widget.profileType);
     setState(() => _loading = false);
     if (!mounted) return;
-    if (user == null) {
-      setState(() => _errorKey = 'error_login_failed');
+    if (!result.success || result.user == null) {
+      setState(() => _errorKey = result.errorKey ?? 'generic_error');
     } else {
-      _goToHome(context, user);
+      _goToHome(context, result.user!);
     }
   }
 
@@ -109,9 +113,14 @@ class _LoginFormState extends State<_LoginForm> {
             Text(context.t('welcome_back'), style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 20),
             TextFormField(
-              controller: _username,
-              decoration: InputDecoration(labelText: context.t('username'), border: const OutlineInputBorder()),
-              validator: (v) => (v == null || v.trim().isEmpty) ? context.t('required_field') : null,
+              controller: _email,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(labelText: context.t('email'), border: const OutlineInputBorder()),
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return context.t('required_field');
+                if (!_isValidEmail(v)) return context.t('error_invalid_email');
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -120,11 +129,21 @@ class _LoginFormState extends State<_LoginForm> {
               decoration: InputDecoration(labelText: context.t('password'), border: const OutlineInputBorder()),
               validator: (v) => (v == null || v.isEmpty) ? context.t('required_field') : null,
             ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                ),
+                child: Text(context.t('forgot_password')),
+              ),
+            ),
             if (_errorKey != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
               Text(context.t(_errorKey!), style: const TextStyle(color: Colors.red)),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _loading ? null : _submit,
               style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
@@ -149,7 +168,7 @@ class _SignupForm extends StatefulWidget {
 
 class _SignupFormState extends State<_SignupForm> {
   final _formKey = GlobalKey<FormState>();
-  final _username = TextEditingController();
+  final _email = TextEditingController();
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
   final _firstName = TextEditingController();
@@ -169,7 +188,7 @@ class _SignupFormState extends State<_SignupForm> {
   @override
   void dispose() {
     for (final c in [
-      _username,
+      _email,
       _password,
       _confirmPassword,
       _firstName,
@@ -197,17 +216,8 @@ class _SignupFormState extends State<_SignupForm> {
       _errorKey = null;
     });
     final appData = context.read<AppData>();
-    final usernameError = appData.findErrorForSignup(_username.text.trim(), widget.profileType);
-    if (usernameError != null) {
-      setState(() {
-        _loading = false;
-        _errorKey = usernameError;
-      });
-      return;
-    }
-    final user = AppUser(
-      id: const Uuid().v4(),
-      username: _username.text.trim(),
+    final result = await appData.signUp(
+      email: _email.text.trim(),
       password: _password.text,
       firstName: _firstName.text.trim(),
       lastName: _lastName.text.trim(),
@@ -220,14 +230,17 @@ class _SignupFormState extends State<_SignupForm> {
       position: _isPersonnel ? _position.text.trim() : null,
       educationLevel: _isPersonnel ? _educationLevel.text.trim() : null,
     );
-    final created = await appData.signUp(user);
     setState(() => _loading = false);
     if (!mounted) return;
-    _goToHome(context, created);
+    if (!result.success || result.user == null) {
+      setState(() => _errorKey = result.errorKey ?? 'generic_error');
+      return;
+    }
+    _goToHome(context, result.user!);
   }
 
   Widget _field(TextEditingController c, String labelKey,
-      {TextInputType type = TextInputType.text, bool numeric = false}) {
+      {TextInputType type = TextInputType.text, bool numeric = false, bool email = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
@@ -237,6 +250,7 @@ class _SignupFormState extends State<_SignupForm> {
         validator: (v) {
           if (v == null || v.trim().isEmpty) return context.t('required_field');
           if (numeric && int.tryParse(v.trim()) == null) return context.t('invalid_number');
+          if (email && !_isValidEmail(v)) return context.t('error_invalid_email');
           return null;
         },
       ),
@@ -252,7 +266,7 @@ class _SignupFormState extends State<_SignupForm> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _field(_username, 'username'),
+            _field(_email, 'email', type: TextInputType.emailAddress, email: true),
             _field(_password, 'password'),
             _field(_confirmPassword, 'confirm_password'),
             _field(_firstName, 'first_name'),

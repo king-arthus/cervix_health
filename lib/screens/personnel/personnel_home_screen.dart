@@ -8,6 +8,9 @@ import '../patient/community_screen.dart';
 import 'personnel_introduction_screen.dart';
 import 'screening_requests_screen.dart';
 import 'patient_tracking_screen.dart';
+import '../profile_screen.dart';
+import '../news_screen.dart';
+import 'dart:convert';
 
 class PersonnelHomeScreen extends StatelessWidget {
   const PersonnelHomeScreen({super.key});
@@ -22,11 +25,26 @@ class PersonnelHomeScreen extends StatelessWidget {
       _ModuleTile(context.t('patient_tracking'), Icons.timeline, const PatientTrackingScreen()),
       _ModuleTile(context.t('module_messaging'), Icons.chat_bubble_outline, const MessagingScreen()),
       _ModuleTile(context.t('module_community'), Icons.groups, const CommunityScreen()),
+      _ModuleTile(context.t('module_news'), Icons.newspaper, const NewsScreen()),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(user?.fullName ?? context.t('personnel_home_title')),
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())),
+            child: CircleAvatar(
+              backgroundImage: (user?.photoBase64 != null && user!.photoBase64!.isNotEmpty)
+                  ? MemoryImage(base64Decode(user.photoBase64!))
+                  : null,
+              child: (user?.photoBase64 == null || user!.photoBase64!.isEmpty)
+                  ? const Icon(Icons.person)
+                  : null,
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

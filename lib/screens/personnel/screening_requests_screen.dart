@@ -5,6 +5,8 @@ import '../../localization/translator.dart';
 import '../../models/screening_models.dart';
 import '../../services/app_data.dart';
 
+import '../../widgets/empty_state.dart';
+
 class ScreeningRequestsScreen extends StatelessWidget {
   const ScreeningRequestsScreen({super.key});
 
@@ -30,7 +32,11 @@ class ScreeningRequestsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.t('screening_requests_received'))),
       body: requests.isEmpty
-          ? Center(child: Text(context.t('no_screening_requests')))
+          ? EmptyState(
+              icon: Icons.assignment_outlined,
+              title: context.t('no_screening_requests'),
+              subtitle: context.t('no_screening_requests_sub'),
+            )
           : ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: requests.length,

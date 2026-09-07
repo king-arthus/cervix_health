@@ -4,9 +4,44 @@ import 'package:provider/provider.dart';
 import '../../localization/translator.dart';
 import '../../models/screening_models.dart';
 import '../../services/app_data.dart';
+import '../../services/notification_service.dart';
+import '../../widgets/empty_state.dart';
 
-class ScreeningTrackingScreen extends StatelessWidget {
+class ScreeningTrackingScreen extends StatefulWidget {
   const ScreeningTrackingScreen({super.key});
+
+  @override
+  State<ScreeningTrackingScreen> createState() => _ScreeningTrackingScreenState();
+}
+
+class _ScreeningTrackingScreenState extends State<ScreeningTrackingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scheduleReminders());
+  }
+
+  /// Programme (ou reprogramme) un rappel local pour chaque rendez-vous à venir.
+  /// Idempotent : appeler plusieurs fois avec les mêmes données ne crée pas de doublons.
+  void _scheduleReminders() {
+    final appData = context.read<AppData>();
+    final user = appData.currentUser;
+    if (user == null) return;
+    final requests = appData.requestsForPatient(user.id);
+    final now = DateTime.now();
+    for (final r in requests) {
+      final appointment = r.nextAppointmentDate;
+      if (appointment == null) continue;
+      if (r.status == ScreeningStatus.annule) continue;
+      if (appointment.isBefore(now)) continue;
+      NotificationService.scheduleAppointmentReminder(
+        id: r.id.hashCode,
+        title: context.tNoWatch('appointment_reminder_title'),
+        body: '${context.tNoWatch('appointment_reminder_body_prefix')} ${r.hospital}',
+        appointmentDate: appointment,
+      );
+    }
+  }
 
   Color _statusColor(ScreeningStatus status) {
     switch (status) {
@@ -31,7 +66,11 @@ class ScreeningTrackingScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.t('tracking_title'))),
       body: requests.isEmpty
-          ? Center(child: Text(context.t('no_requests_yet')))
+          ? EmptyState(
+              icon: Icons.timeline_outlined,
+              title: context.t('no_requests_yet'),
+              subtitle: context.t('no_requests_yet_sub'),
+            )
           : ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: requests.length,
@@ -65,9 +104,18 @@ class ScreeningTrackingScreen extends StatelessWidget {
                         if (r.result != null && r.result!.isNotEmpty)
                           Text('${context.t('result_label')} : ${r.result}'),
                         if (r.nextAppointmentDate != null)
-                          Text(
-                            '${context.t('next_appointment')} : ${dateFormat.format(r.nextAppointmentDate!)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.notifications_active_outlined, size: 16, color: Colors.deepPurple),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${context.t('next_appointment')} : ${dateFormat.format(r.nextAppointmentDate!)}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
                           ),
                       ],
                     ),
