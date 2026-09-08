@@ -1,38 +1,68 @@
 name: Build Android APK
- 
+
 on:
   push:
     branches: [main, master]
   workflow_dispatch:
- 
+
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
- 
+
     steps:
       - name: Récupérer le code du dépôt
         uses: actions/checkout@v4
- 
+
       - name: Installer Java (requis par Android/Gradle)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
- 
+
       - name: Installer Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
- 
-      - name: Générer les dossiers Android manquants
-        run: flutter create --platforms=android --org com.cervixhealth .
- 
+
+      - name: Générer le dossier Android natif (une seule fois, s'il n'existe pas encore)
+        run: |
+          if [ ! -d android ]; then
+            flutter create --platforms=android --org com.cervixhealth .
+          fi
+
+      - name: Activer le "core library desugaring" requis par les notifications
+        run: |
+          KTS="android/app/build.gradle.kts"
+          GROOVY="android/app/build.gradle"
+          if [ -f "$KTS" ]; then
+            grep -q "isCoreLibraryDesugaringEnabled" "$KTS" || \
+              sed -i '/compileOptions {/a\        isCoreLibraryDesugaringEnabled = true' "$KTS"
+            grep -q "coreLibraryDesugaring(" "$KTS" || \
+              sed -i '/^dependencies {/a\    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' "$KTS"
+          elif [ -f "$GROOVY" ]; then
+            grep -q "coreLibraryDesugaringEnabled" "$GROOVY" || \
+              sed -i '/compileOptions {/a\        coreLibraryDesugaringEnabled true' "$GROOVY"
+            grep -q "coreLibraryDesugaring " "$GROOVY" || \
+              sed -i "/^dependencies {/a\\    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'" "$GROOVY"
+          fi
+
+      - name: Enregistrer le dossier Android généré/modifié dans le dépôt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add android
+          git diff --cached --quiet || git commit -m "chore: generate/patch native Android project [skip ci]"
+          git push || true
+
       - name: Installer les dépendances du projet
         run: flutter pub get
- 
+
       - name: Compiler l'APK (release)
         run: flutter build apk --release
- 
+
       - name: Publier l'APK comme "artifact" téléchargeable
         uses: actions/upload-artifact@v4
         with:
