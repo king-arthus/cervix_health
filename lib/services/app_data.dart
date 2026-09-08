@@ -105,7 +105,7 @@ class AppData extends ChangeNotifier {
     }
     final result = await FirebaseAuthService.refreshIdToken(_refreshToken!);
     if (!result.success || result.idToken == null || result.refreshToken == null) return null;
-    await _storeTokens(result.idToken!, result.refreshToken!, result.expiresIn);
+    await _storeTokens(result.idToken!, result.refreshToken!, result.expiresInSeconds);
     return _idToken;
   }
 
@@ -147,7 +147,7 @@ class AppData extends ChangeNotifier {
     );
     users.add(user);
     await _saveUsers();
-    await _storeTokens(result.idToken!, result.refreshToken!, result.expiresIn);
+    await _storeTokens(result.idToken!, result.refreshToken!, result.expiresInSeconds);
     await _setSession(user);
     // Publie immédiatement le profil dans la base partagée.
     await RealtimeDbService.putItem('users', user.id, user.toJson(), result.idToken!);
@@ -164,7 +164,7 @@ class AppData extends ChangeNotifier {
     if (!result.success || result.uid == null || result.idToken == null || result.refreshToken == null) {
       return (success: false, user: null, errorKey: result.errorKey);
     }
-    await _storeTokens(result.idToken!, result.refreshToken!, result.expiresIn);
+    await _storeTokens(result.idToken!, result.refreshToken!, result.expiresInSeconds);
     // Récupère les dernières données de la base partagée avant de chercher le profil local.
     await _pullRemoteData();
     AppUser? match;
