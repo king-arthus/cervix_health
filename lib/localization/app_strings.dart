@@ -114,6 +114,7 @@ class AppStrings {
       'error_profile_not_found':
           'Compte trouvé mais aucun profil associé à ce type sur cet appareil. Essayez l\'autre profil (patiente/personnel) ou réinscrivez-vous.',
       'generic_error': 'Une erreur est survenue. Vérifiez votre connexion internet et réessayez.',
+      'error_email_auth_disabled': 'La connexion par e-mail n\'est pas encore activée sur le serveur. Vérifiez dans Firebase : Authentication > Sign-in method > Email/Password.',
       'no_requests_yet_sub': 'Vos demandes de dépistage apparaîtront ici une fois envoyées.',
       'no_conversations_sub': 'Vos échanges avec les patientes ou le personnel apparaîtront ici.',
       'no_posts_yet_sub': 'Soyez la première personne à partager quelque chose avec la communauté.',
@@ -270,6 +271,7 @@ class AppStrings {
       'error_profile_not_found':
           'Account found but no matching profile on this device. Try the other profile type (patient/staff) or sign up again.',
       'generic_error': 'Something went wrong. Check your internet connection and try again.',
+      'error_email_auth_disabled': 'Email sign-in is not yet enabled on the server. Check in Firebase: Authentication > Sign-in method > Email/Password.',
       'no_requests_yet_sub': 'Your screening requests will appear here once sent.',
       'no_conversations_sub': 'Your conversations with patients or staff will appear here.',
       'no_posts_yet_sub': 'Be the first to share something with the community.',
@@ -424,6 +426,7 @@ class AppStrings {
       'error_profile_not_found':
           'تم العثور على الحساب ولكن لا يوجد ملف شخصي مطابق على هذا الجهاز. جرّب النوع الآخر من الملفات الشخصية أو أعد التسجيل.',
       'generic_error': 'حدث خطأ ما. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.',
+      'error_email_auth_disabled': 'تسجيل الدخول بالبريد الإلكتروني غير مفعّل بعد على الخادم. تحقق في Firebase: Authentication > Sign-in method > Email/Password.',
       'no_requests_yet_sub': 'ستظهر طلبات الفحص الخاصة بك هنا بعد إرسالها.',
       'no_conversations_sub': 'ستظهر محادثاتك مع المريضات أو الطاقم الصحي هنا.',
       'no_posts_yet_sub': 'كن أول من يشارك شيئًا مع المجتمع.',

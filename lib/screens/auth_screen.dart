@@ -108,6 +108,7 @@ class _LoginFormState extends State<_LoginForm> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   String? _errorKey;
+  String? _debugMessage;
   bool _loading = false;
 
   Future<void> _submit() async {
@@ -115,13 +116,17 @@ class _LoginFormState extends State<_LoginForm> {
     setState(() {
       _loading = true;
       _errorKey = null;
+      _debugMessage = null;
     });
     final appData = context.read<AppData>();
     final result = await appData.login(_email.text.trim(), _password.text, widget.role);
     setState(() => _loading = false);
     if (!mounted) return;
     if (!result.success || result.user == null) {
-      setState(() => _errorKey = result.errorKey ?? 'generic_error');
+      setState(() {
+        _errorKey = result.errorKey ?? 'generic_error';
+        _debugMessage = result.debugMessage;
+      });
     } else {
       _goToHome(context, result.user!);
     }
@@ -168,6 +173,10 @@ class _LoginFormState extends State<_LoginForm> {
             if (_errorKey != null) ...[
               const SizedBox(height: 4),
               Text(context.t(_errorKey!), style: const TextStyle(color: Colors.red)),
+              if (_debugMessage != null) ...[
+                const SizedBox(height: 4),
+                Text(_debugMessage!, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+              ],
             ],
             const SizedBox(height: 16),
             ElevatedButton(
@@ -208,6 +217,7 @@ class _SignupFormState extends State<_SignupForm> {
   final _specialty = TextEditingController();
   String _gender = 'female';
   String? _errorKey;
+  String? _debugMessage;
   bool _loading = false;
 
   bool get _isAgent => widget.role == UserRole.agent;
@@ -243,6 +253,7 @@ class _SignupFormState extends State<_SignupForm> {
     setState(() {
       _loading = true;
       _errorKey = null;
+      _debugMessage = null;
     });
     final appData = context.read<AppData>();
     final result = await appData.signUp(
@@ -263,7 +274,10 @@ class _SignupFormState extends State<_SignupForm> {
     setState(() => _loading = false);
     if (!mounted) return;
     if (!result.success || result.user == null) {
-      setState(() => _errorKey = result.errorKey ?? 'generic_error');
+      setState(() {
+        _errorKey = result.errorKey ?? 'generic_error';
+        _debugMessage = result.debugMessage;
+      });
       return;
     }
     _goToHome(context, result.user!);
@@ -328,6 +342,10 @@ class _SignupFormState extends State<_SignupForm> {
             ],
             if (_errorKey != null) ...[
               Text(context.t(_errorKey!), style: const TextStyle(color: Colors.red)),
+              if (_debugMessage != null) ...[
+                const SizedBox(height: 4),
+                Text(_debugMessage!, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+              ],
               const SizedBox(height: 12),
             ],
             ElevatedButton(

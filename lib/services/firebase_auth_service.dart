@@ -4,8 +4,8 @@ import '../config/firebase_config.dart';
 
 /// Résultat générique d'une opération d'authentification Firebase.
 /// [errorKey] correspond à une clé de traduction (voir app_strings.dart) quand success = false.
-/// [idToken]/[refreshToken]/[expiresInSeconds] sont fournis sur signIn/signUp réussis,
-/// nécessaires pour authentifier les appels à Realtime Database.
+/// [debugMessage] contient le code d'erreur brut renvoyé par Firebase (ou l'exception
+/// technique), utile pour diagnostiquer les cas non reconnus par [errorKey].
 class AuthResult {
   final bool success;
   final String? uid;
@@ -13,6 +13,7 @@ class AuthResult {
   final String? refreshToken;
   final int? expiresInSeconds;
   final String? errorKey;
+  final String? debugMessage;
   AuthResult({
     required this.success,
     this.uid,
@@ -20,6 +21,7 @@ class AuthResult {
     this.refreshToken,
     this.expiresInSeconds,
     this.errorKey,
+    this.debugMessage,
   });
 }
 
@@ -41,6 +43,8 @@ class FirebaseAuthService {
         return 'error_wrong_password';
       case 'INVALID_EMAIL':
         return 'error_invalid_email';
+      case 'OPERATION_NOT_ALLOWED':
+        return 'error_email_auth_disabled';
       default:
         if (message != null && message.startsWith('WEAK_PASSWORD')) {
           return 'error_weak_password';
@@ -49,7 +53,17 @@ class FirebaseAuthService {
     }
   }
 
-  static AuthResult _fromResponse(int statusCode, Map<String, dynamic> data) {
+  static AuthResult _fromResponse(int statusCode, dynamic rawBody) {
+    Map<String, dynamic> data;
+    try {
+      data = rawBody is String ? jsonDecode(rawBody) : rawBody;
+    } catch (_) {
+      return AuthResult(
+        success: false,
+        errorKey: 'generic_error',
+        debugMessage: 'HTTP $statusCode — réponse illisible : $rawBody',
+      );
+    }
     if (statusCode == 200 && data['localId'] != null) {
       return AuthResult(
         success: true,
@@ -59,7 +73,12 @@ class FirebaseAuthService {
         expiresInSeconds: int.tryParse(data['expiresIn']?.toString() ?? ''),
       );
     }
-    return AuthResult(success: false, errorKey: _mapError(data['error']?['message']));
+    final rawMessage = data['error']?['message']?.toString();
+    return AuthResult(
+      success: false,
+      errorKey: _mapError(rawMessage),
+      debugMessage: 'HTTP $statusCode — ${rawMessage ?? data.toString()}',
+    );
   }
 
   static Future<AuthResult> signUp({required String email, required String password}) async {
@@ -69,9 +88,9 @@ class FirebaseAuthService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password, 'returnSecureToken': true}),
       );
-      return _fromResponse(res.statusCode, jsonDecode(res.body));
-    } catch (_) {
-      return AuthResult(success: false, errorKey: 'generic_error');
+      return _fromResponse(res.statusCode, res.body);
+    } catch (e) {
+      return AuthResult(success: false, errorKey: 'generic_error', debugMessage: 'Exception : $e');
     }
   }
 
@@ -82,9 +101,9 @@ class FirebaseAuthService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password, 'returnSecureToken': true}),
       );
-      return _fromResponse(res.statusCode, jsonDecode(res.body));
-    } catch (_) {
-      return AuthResult(success: false, errorKey: 'generic_error');
+      return _fromResponse(res.statusCode, res.body);
+    } catch (e) {
+      return AuthResult(success: false, errorKey: 'generic_error', debugMessage: 'Exception : $e');
     }
   }
 
@@ -100,9 +119,14 @@ class FirebaseAuthService {
       if (res.statusCode == 200) {
         return AuthResult(success: true);
       }
-      return AuthResult(success: false, errorKey: _mapError(data['error']?['message']));
-    } catch (_) {
-      return AuthResult(success: false, errorKey: 'generic_error');
+      final rawMessage = data['error']?['message']?.toString();
+      return AuthResult(
+        success: false,
+        errorKey: _mapError(rawMessage),
+        debugMessage: 'HTTP ${res.statusCode} — ${rawMessage ?? data.toString()}',
+      );
+    } catch (e) {
+      return AuthResult(success: false, errorKey: 'generic_error', debugMessage: 'Exception : $e');
     }
   }
 
@@ -125,9 +149,9 @@ class FirebaseAuthService {
           expiresInSeconds: int.tryParse(data['expires_in']?.toString() ?? ''),
         );
       }
-      return AuthResult(success: false, errorKey: 'generic_error');
-    } catch (_) {
-      return AuthResult(success: false, errorKey: 'generic_error');
+      return AuthResult(success: false, errorKey: 'generic_error', debugMessage: data.toString());
+    } catch (e) {
+      return AuthResult(success: false, errorKey: 'generic_error', debugMessage: 'Exception : $e');
     }
   }
 }

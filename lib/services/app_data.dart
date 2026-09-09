@@ -111,7 +111,7 @@ class AppData extends ChangeNotifier {
 
   // ---------------- Authentification (Firebase Auth via API REST) ----------------
 
-  Future<({bool success, AppUser? user, String? errorKey})> signUp({
+  Future<({bool success, AppUser? user, String? errorKey, String? debugMessage})> signUp({
     required String email,
     required String password,
     required String firstName,
@@ -128,7 +128,7 @@ class AppData extends ChangeNotifier {
   }) async {
     final result = await FirebaseAuthService.signUp(email: email, password: password);
     if (!result.success || result.uid == null || result.idToken == null || result.refreshToken == null) {
-      return (success: false, user: null, errorKey: result.errorKey);
+      return (success: false, user: null, errorKey: result.errorKey, debugMessage: result.debugMessage);
     }
     final user = AppUser(
       id: result.uid!,
@@ -152,17 +152,17 @@ class AppData extends ChangeNotifier {
     // Publie immédiatement le profil dans la base partagée.
     await RealtimeDbService.putItem('users', user.id, user.toJson(), result.idToken!);
     _startSync();
-    return (success: true, user: user, errorKey: null);
+    return (success: true, user: user, errorKey: null, debugMessage: null);
   }
 
-  Future<({bool success, AppUser? user, String? errorKey})> login(
+  Future<({bool success, AppUser? user, String? errorKey, String? debugMessage})> login(
     String email,
     String password,
     UserRole role,
   ) async {
     final result = await FirebaseAuthService.signIn(email: email, password: password);
     if (!result.success || result.uid == null || result.idToken == null || result.refreshToken == null) {
-      return (success: false, user: null, errorKey: result.errorKey);
+      return (success: false, user: null, errorKey: result.errorKey, debugMessage: result.debugMessage);
     }
     await _storeTokens(result.idToken!, result.refreshToken!, result.expiresInSeconds);
     // Récupère les dernières données de la base partagée avant de chercher le profil local.
@@ -174,16 +174,16 @@ class AppData extends ChangeNotifier {
       match = null;
     }
     if (match == null) {
-      return (success: false, user: null, errorKey: 'error_profile_not_found');
+      return (success: false, user: null, errorKey: 'error_profile_not_found', debugMessage: null);
     }
     await _setSession(match);
     _startSync();
-    return (success: true, user: match, errorKey: null);
+    return (success: true, user: match, errorKey: null, debugMessage: null);
   }
 
-  Future<({bool success, String? errorKey})> sendPasswordResetEmail(String email) async {
+  Future<({bool success, String? errorKey, String? debugMessage})> sendPasswordResetEmail(String email) async {
     final result = await FirebaseAuthService.sendPasswordResetEmail(email);
-    return (success: result.success, errorKey: result.errorKey);
+    return (success: result.success, errorKey: result.errorKey, debugMessage: result.debugMessage);
   }
 
   Future<void> _setSession(AppUser user) async {
