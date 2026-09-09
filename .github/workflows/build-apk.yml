@@ -35,19 +35,38 @@ jobs:
 
       - name: Activer le "core library desugaring" requis par les notifications
         run: |
-          KTS="android/app/build.gradle.kts"
-          GROOVY="android/app/build.gradle"
-          if [ -f "$KTS" ]; then
-            grep -q "isCoreLibraryDesugaringEnabled" "$KTS" || \
-              sed -i '/compileOptions {/a\        isCoreLibraryDesugaringEnabled = true' "$KTS"
-            grep -q "coreLibraryDesugaring(" "$KTS" || \
-              sed -i '/^dependencies {/a\    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' "$KTS"
-          elif [ -f "$GROOVY" ]; then
-            grep -q "coreLibraryDesugaringEnabled" "$GROOVY" || \
-              sed -i '/compileOptions {/a\        coreLibraryDesugaringEnabled true' "$GROOVY"
-            grep -q "coreLibraryDesugaring " "$GROOVY" || \
-              sed -i "/^dependencies {/a\\    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'" "$GROOVY"
-          fi
+          python3 - <<'PYEOF'
+          import re
+
+          path = "android/app/build.gradle.kts"
+          try:
+              with open(path) as f:
+                  content = f.read()
+              kotlin = True
+          except FileNotFoundError:
+              path = "android/app/build.gradle"
+              with open(path) as f:
+                  content = f.read()
+              kotlin = False
+
+          if "CoreLibraryDesugaringEnabled" not in content:
+              flag = "isCoreLibraryDesugaringEnabled = true" if kotlin else "coreLibraryDesugaringEnabled true"
+              content = re.sub(r'(compileOptions\s*\{)', r'\1\n        ' + flag, content, count=1)
+
+          if "coreLibraryDesugaring" not in content or "desugar_jdk_libs" not in content:
+              dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if kotlin \
+                  else "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+              if re.search(r'dependencies\s*\{', content):
+                  content = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + dep, content, count=1)
+              else:
+                  content += '\n\ndependencies {\n    ' + dep + '\n}\n'
+
+          with open(path, "w") as f:
+              f.write(content)
+          print(f"Patched {path}")
+          PYEOF
+          echo "--- Contenu final de build.gradle(.kts) ---"
+          cat android/app/build.gradle.kts 2>/dev/null || cat android/app/build.gradle
 
       - name: Enregistrer le dossier Android généré/modifié dans le dépôt
         run: |
