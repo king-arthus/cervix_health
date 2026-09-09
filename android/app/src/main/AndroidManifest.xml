@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <use-permission android :name="andoid.permission.INTERNET"/>
     <application
         android:label="cervix_health"
         android:name="${applicationName}"
