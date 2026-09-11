@@ -165,6 +165,11 @@ class AppStrings {
       'consent_must_accept': 'Vous devez accepter les conditions pour continuer.',
       'consent_continue': 'Continuer',
       'specialist_tracking_title': 'Suivi de mes dossiers',
+      'email_not_verified_banner': 'Votre adresse e-mail n\'est pas encore vérifiée. Vérifiez votre boîte de réception (et vos spams).',
+      'resend_verification_email': 'Renvoyer l\'e-mail',
+      'ive_verified_check_now': 'J\'ai vérifié',
+      'verification_email_resent': 'E-mail de vérification renvoyé.',
+      'email_not_verified_yet': 'Toujours pas vérifiée pour l\'instant.',
     },
     'en': {
       'welcome_title': 'Welcome to Cervix Health',
@@ -328,6 +333,11 @@ class AppStrings {
       'consent_must_accept': 'You must accept the terms to continue.',
       'consent_continue': 'Continue',
       'specialist_tracking_title': 'My case tracking',
+      'email_not_verified_banner': 'Your email address is not verified yet. Check your inbox (and spam folder).',
+      'resend_verification_email': 'Resend email',
+      'ive_verified_check_now': 'I\'ve verified',
+      'verification_email_resent': 'Verification email resent.',
+      'email_not_verified_yet': 'Still not verified yet.',
     },
     'ar': {
       'welcome_title': 'مرحبًا بك في Cervix Health',
@@ -489,6 +499,11 @@ class AppStrings {
       'consent_must_accept': 'يجب عليك قبول الشروط للمتابعة.',
       'consent_continue': 'متابعة',
       'specialist_tracking_title': 'متابعة ملفاتي',
+      'email_not_verified_banner': 'لم يتم التحقق من عنوان بريدك الإلكتروني بعد. تحقق من صندوق الوارد (والبريد غير المرغوب فيه).',
+      'resend_verification_email': 'إعادة إرسال البريد',
+      'ive_verified_check_now': 'لقد تحققت',
+      'verification_email_resent': 'تم إعادة إرسال بريد التحقق.',
+      'email_not_verified_yet': 'لم يتم التحقق بعد.',
     },
   };
 

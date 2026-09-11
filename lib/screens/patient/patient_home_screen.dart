@@ -10,6 +10,7 @@ import 'screening_tracking_screen.dart';
 import 'messaging_screen.dart';
 import 'community_screen.dart';
 import '../profile_screen.dart';
+import '../../widgets/email_verification_banner.dart';
 import '../news_screen.dart';
 import 'dart:convert';
 
@@ -62,12 +63,19 @@ class PatientHomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: GridView.count(
-        padding: const EdgeInsets.all(16),
-        crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        children: tiles.map((tile) => _buildCard(context, tile)).toList(),
+      body: Column(
+        children: [
+          const EmailVerificationBanner(),
+          Expanded(
+            child: GridView.count(
+              padding: const EdgeInsets.all(16),
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              children: tiles.map((tile) => _buildCard(context, tile)).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }

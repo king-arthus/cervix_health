@@ -130,6 +130,47 @@ class FirebaseAuthService {
     }
   }
 
+  /// Envoie un e-mail de vérification à l'adresse du compte actuellement connecté.
+  static Future<AuthResult> sendEmailVerification(String idToken) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_base:sendOobCode?key=$firebaseWebApiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'requestType': 'VERIFY_EMAIL', 'idToken': idToken}),
+      );
+      final data = jsonDecode(res.body);
+      if (res.statusCode == 200) {
+        return AuthResult(success: true);
+      }
+      final rawMessage = data['error']?['message']?.toString();
+      return AuthResult(
+        success: false,
+        errorKey: _mapError(rawMessage),
+        debugMessage: 'HTTP ${res.statusCode} — ${rawMessage ?? data.toString()}',
+      );
+    } catch (e) {
+      return AuthResult(success: false, errorKey: 'generic_error', debugMessage: 'Exception : $e');
+    }
+  }
+
+  /// Récupère les informations du compte (dont le statut de vérification de l'e-mail).
+  static Future<bool?> isEmailVerified(String idToken) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_base:lookup?key=$firebaseWebApiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'idToken': idToken}),
+      );
+      if (res.statusCode != 200) return null;
+      final data = jsonDecode(res.body);
+      final users = data['users'] as List?;
+      if (users == null || users.isEmpty) return null;
+      return users.first['emailVerified'] == true;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Utilise le refresh token pour obtenir un nouveau idToken valide
   /// (les idToken Firebase expirent au bout d'une heure).
   static Future<AuthResult> refreshIdToken(String refreshToken) async {

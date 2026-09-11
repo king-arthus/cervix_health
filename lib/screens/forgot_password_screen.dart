@@ -20,12 +20,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   bool _loading = false;
   bool _sent = false;
   String? _errorKey;
+  String? _debugMessage;
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _loading = true;
       _errorKey = null;
+      _debugMessage = null;
     });
     final result = await context.read<AppData>().sendPasswordResetEmail(_email.text.trim());
     setState(() => _loading = false);
@@ -33,7 +35,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (result.success) {
       setState(() => _sent = true);
     } else {
-      setState(() => _errorKey = result.errorKey ?? 'generic_error');
+      setState(() {
+        _errorKey = result.errorKey ?? 'generic_error';
+        _debugMessage = result.debugMessage;
+      });
     }
   }
 
@@ -83,6 +88,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     if (_errorKey != null) ...[
                       const SizedBox(height: 12),
                       Text(context.t(_errorKey!), style: const TextStyle(color: Colors.red)),
+                      if (_debugMessage != null) ...[
+                        const SizedBox(height: 4),
+                        Text(_debugMessage!, style: const TextStyle(color: Colors.grey, fontSize: 11)),
+                      ],
                     ],
                     const SizedBox(height: 20),
                     ElevatedButton(

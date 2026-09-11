@@ -30,6 +30,7 @@ class AppUser {
   final String? educationLevel;
   final String? specialty; // spécifique au spécialiste (ex. anatomopathologie, gynécologie)
   final String? photoBase64;
+  final bool emailVerified;
 
   AppUser({
     required this.id,
@@ -46,7 +47,27 @@ class AppUser {
     this.educationLevel,
     this.specialty,
     this.photoBase64,
+    this.emailVerified = false,
   });
+
+  /// Retourne une copie de l'utilisateur avec le statut de vérification d'e-mail modifié.
+  AppUser copyWithEmailVerified(bool verified) => AppUser(
+        id: id,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        age: age,
+        gender: gender,
+        contact: contact,
+        role: role,
+        employerFacility: employerFacility,
+        startYear: startYear,
+        position: position,
+        educationLevel: educationLevel,
+        specialty: specialty,
+        photoBase64: photoBase64,
+        emailVerified: verified,
+      );
 
   /// Retourne une copie de l'utilisateur avec la photo de profil modifiée.
   AppUser copyWithPhoto(String? newPhotoBase64) => AppUser(
@@ -64,6 +85,7 @@ class AppUser {
         educationLevel: educationLevel,
         specialty: specialty,
         photoBase64: newPhotoBase64,
+        emailVerified: emailVerified,
       );
 
   String get fullName => '$firstName $lastName';
@@ -83,6 +105,7 @@ class AppUser {
         'educationLevel': educationLevel,
         'specialty': specialty,
         'photoBase64': photoBase64,
+        'emailVerified': emailVerified,
       };
 
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
@@ -100,5 +123,6 @@ class AppUser {
         educationLevel: json['educationLevel'],
         specialty: json['specialty'],
         photoBase64: json['photoBase64'],
+        emailVerified: json['emailVerified'] == true,
       );
 }

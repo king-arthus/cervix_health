@@ -154,6 +154,8 @@ class AppData extends ChangeNotifier {
     await _setSession(user);
     // Publie immédiatement le profil dans la base partagée.
     await RealtimeDbService.putItem('users', user.id, user.toJson(), result.idToken!);
+    // Envoie l'e-mail de vérification (best-effort, n'empêche pas l'inscription si ça échoue).
+    await FirebaseAuthService.sendEmailVerification(result.idToken!);
     _startSync();
     return (success: true, user: user, errorKey: null, debugMessage: null);
   }
@@ -459,6 +461,32 @@ class AppData extends ChangeNotifier {
     localeCode = code;
     await _prefs?.setString(_kLocale, code);
     notifyListeners();
+  }
+
+  // ---------------- Vérification d'e-mail ----------------
+
+  Future<({bool success, String? errorKey})> resendVerificationEmail() async {
+    final token = await _validIdToken();
+    if (token == null) return (success: false, errorKey: 'generic_error');
+    final result = await FirebaseAuthService.sendEmailVerification(token);
+    return (success: result.success, errorKey: result.errorKey);
+  }
+
+  /// Vérifie auprès de Firebase si l'e-mail a été confirmé, et met à jour le profil si oui.
+  Future<bool> refreshEmailVerifiedStatus() async {
+    final token = await _validIdToken();
+    if (token == null || currentUser == null) return false;
+    final verified = await FirebaseAuthService.isEmailVerified(token);
+    if (verified == true && currentUser!.emailVerified != true) {
+      final updated = currentUser!.copyWithEmailVerified(true);
+      final idx = users.indexWhere((u) => u.id == updated.id);
+      if (idx != -1) users[idx] = updated;
+      currentUser = updated;
+      await _saveUsers();
+      await RealtimeDbService.putItem('users', updated.id, updated.toJson(), token);
+      notifyListeners();
+    }
+    return verified ?? false;
   }
 
   // ---------------- Consentement ----------------

@@ -11,6 +11,7 @@ import '../personnel/personnel_introduction_screen.dart';
 import 'specialist_dossiers_screen.dart';
 import 'specialist_tracking_screen.dart';
 import 'dart:convert';
+import '../../widgets/email_verification_banner.dart';
 
 /// Espace Spécialiste — étape 1 de la refonte par rôles.
 /// Le flux complet (dossiers attribués, validation, suggestion IA) sera
@@ -63,12 +64,19 @@ class SpecialisteHomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: GridView.count(
-        padding: const EdgeInsets.all(16),
-        crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        children: tiles.map((tile) => _buildCard(context, tile)).toList(),
+      body: Column(
+        children: [
+          const EmailVerificationBanner(),
+          Expanded(
+            child: GridView.count(
+              padding: const EdgeInsets.all(16),
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              children: tiles.map((tile) => _buildCard(context, tile)).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
