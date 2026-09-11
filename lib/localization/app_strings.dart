@@ -164,6 +164,7 @@ class AppStrings {
       'consent_checkbox_label': 'J\'ai lu et j\'accepte les conditions d\'utilisation et la politique de confidentialité ci-dessus.',
       'consent_must_accept': 'Vous devez accepter les conditions pour continuer.',
       'consent_continue': 'Continuer',
+      'specialist_tracking_title': 'Suivi de mes dossiers',
     },
     'en': {
       'welcome_title': 'Welcome to Cervix Health',
@@ -326,6 +327,7 @@ class AppStrings {
       'consent_checkbox_label': 'I have read and accept the terms of use and privacy policy above.',
       'consent_must_accept': 'You must accept the terms to continue.',
       'consent_continue': 'Continue',
+      'specialist_tracking_title': 'My case tracking',
     },
     'ar': {
       'welcome_title': 'مرحبًا بك في Cervix Health',
@@ -486,6 +488,7 @@ class AppStrings {
       'consent_checkbox_label': 'لقد قرأت ووافقت على شروط الاستخدام وسياسة الخصوصية أعلاه.',
       'consent_must_accept': 'يجب عليك قبول الشروط للمتابعة.',
       'consent_continue': 'متابعة',
+      'specialist_tracking_title': 'متابعة ملفاتي',
     },
   };
 

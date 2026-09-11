@@ -9,6 +9,7 @@ import '../patient/messaging_screen.dart';
 import '../patient/community_screen.dart';
 import '../personnel/personnel_introduction_screen.dart';
 import 'specialist_dossiers_screen.dart';
+import 'specialist_tracking_screen.dart';
 import 'dart:convert';
 
 /// Espace Spécialiste — étape 1 de la refonte par rôles.
@@ -23,6 +24,7 @@ class SpecialisteHomeScreen extends StatelessWidget {
     final tiles = <_ModuleTile>[
       _ModuleTile(context.t('module_introduction'), Icons.menu_book, const PersonnelIntroductionScreen()),
       _ModuleTile(context.t('received_dossiers'), Icons.folder_shared_outlined, const SpecialistDossiersScreen()),
+      _ModuleTile(context.t('tracking_title'), Icons.timeline_outlined, const SpecialistTrackingScreen()),
       _ModuleTile(context.t('module_messaging'), Icons.chat_bubble_outline, const MessagingScreen()),
       _ModuleTile(context.t('module_community'), Icons.groups, const CommunityScreen()),
       _ModuleTile(context.t('module_news'), Icons.newspaper, const NewsScreen()),

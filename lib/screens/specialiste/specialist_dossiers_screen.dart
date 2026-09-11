@@ -24,7 +24,9 @@ class SpecialistDossiersScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appData = context.watch<AppData>();
     final user = appData.currentUser;
-    final dossiers = user == null ? <ScreeningRequest>[] : appData.requestsForSpecialist(user.id);
+    final dossiers = user == null
+        ? <ScreeningRequest>[]
+        : appData.requestsForSpecialist(user.id).where((d) => d.status == ScreeningStatus.oriente).toList();
     final dateFormat = DateFormat.yMMMd(appData.localeCode);
 
     return Scaffold(
