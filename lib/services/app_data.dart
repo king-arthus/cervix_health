@@ -22,6 +22,7 @@ class AppData extends ChangeNotifier {
   static const _kIdToken = 'ch_id_token';
   static const _kRefreshToken = 'ch_refresh_token';
   static const _kTokenExpiry = 'ch_token_expiry';
+  static const _kConsentAccepted = 'ch_consent_accepted';
 
   final _uuid = const Uuid();
   SharedPreferences? _prefs;
@@ -33,6 +34,7 @@ class AppData extends ChangeNotifier {
   List<CommunityPost> posts = [];
   AppUser? currentUser;
   String localeCode = 'fr';
+  bool consentAccepted = false;
 
   String? _idToken;
   String? _refreshToken;
@@ -41,6 +43,7 @@ class AppData extends ChangeNotifier {
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
     _loadAll();
+    consentAccepted = _prefs!.getBool(_kConsentAccepted) ?? false;
     final savedUserId = _prefs!.getString(_kSessionUserId);
     _idToken = _prefs!.getString(_kIdToken);
     _refreshToken = _prefs!.getString(_kRefreshToken);
@@ -455,6 +458,14 @@ class AppData extends ChangeNotifier {
   Future<void> setLocale(String code) async {
     localeCode = code;
     await _prefs?.setString(_kLocale, code);
+    notifyListeners();
+  }
+
+  // ---------------- Consentement ----------------
+
+  Future<void> acceptConsent() async {
+    consentAccepted = true;
+    await _prefs?.setBool(_kConsentAccepted, true);
     notifyListeners();
   }
 

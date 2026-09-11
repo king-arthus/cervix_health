@@ -5,6 +5,7 @@ import 'localization/app_strings.dart';
 import 'services/app_data.dart';
 import 'services/notification_service.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/consent_screen.dart';
 import 'screens/patient/patient_home_screen.dart';
 import 'screens/personnel/personnel_home_screen.dart';
 import 'screens/specialiste/specialiste_home_screen.dart';
@@ -59,7 +60,9 @@ class _CervixHealthAppState extends State<CervixHealthApp> {
     }
 
     Widget home;
-    if (appData.currentUser == null) {
+    if (!appData.consentAccepted) {
+      home = const ConsentScreen();
+    } else if (appData.currentUser == null) {
       home = const WelcomeScreen();
     } else {
       switch (appData.currentUser!.role) {

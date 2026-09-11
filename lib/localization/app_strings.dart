@@ -159,6 +159,11 @@ class AppStrings {
       'validate_dossier': 'Valider le dossier',
       'dossier_validated_message': 'Dossier validé avec succès',
       'dossier_already_validated': 'Ce dossier a déjà été validé.',
+      'consent_title': 'Consentement et conditions d\'utilisation',
+      'consent_intro': 'Avant de continuer, merci de lire attentivement les informations suivantes sur la manière dont vos données seront traitées.',
+      'consent_checkbox_label': 'J\'ai lu et j\'accepte les conditions d\'utilisation et la politique de confidentialité ci-dessus.',
+      'consent_must_accept': 'Vous devez accepter les conditions pour continuer.',
+      'consent_continue': 'Continuer',
     },
     'en': {
       'welcome_title': 'Welcome to Cervix Health',
@@ -316,6 +321,11 @@ class AppStrings {
       'validate_dossier': 'Validate case',
       'dossier_validated_message': 'Case successfully validated',
       'dossier_already_validated': 'This case has already been validated.',
+      'consent_title': 'Consent and Terms of Use',
+      'consent_intro': 'Before continuing, please read the following information carefully about how your data will be processed.',
+      'consent_checkbox_label': 'I have read and accept the terms of use and privacy policy above.',
+      'consent_must_accept': 'You must accept the terms to continue.',
+      'consent_continue': 'Continue',
     },
     'ar': {
       'welcome_title': 'مرحبًا بك في Cervix Health',
@@ -471,6 +481,11 @@ class AppStrings {
       'validate_dossier': 'التحقق من الملف',
       'dossier_validated_message': 'تم التحقق من الملف بنجاح',
       'dossier_already_validated': 'تم التحقق من هذا الملف بالفعل.',
+      'consent_title': 'الموافقة وشروط الاستخدام',
+      'consent_intro': 'قبل المتابعة، يرجى قراءة المعلومات التالية بعناية حول كيفية معالجة بياناتك.',
+      'consent_checkbox_label': 'لقد قرأت ووافقت على شروط الاستخدام وسياسة الخصوصية أعلاه.',
+      'consent_must_accept': 'يجب عليك قبول الشروط للمتابعة.',
+      'consent_continue': 'متابعة',
     },
   };
 
