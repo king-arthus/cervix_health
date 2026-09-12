@@ -103,19 +103,30 @@ class _ScreeningTrackingScreenState extends State<ScreeningTrackingScreen> {
                         ),
                         const SizedBox(height: 6),
                         Text('${context.t('date_label')} : ${dateFormat.format(r.requestDate)}'),
-                        if (r.viaResult != null) Text('VIA : ${r.viaResult}'),
-                        if (r.viliResult != null) Text('VILI : ${r.viliResult}'),
-                        if (r.conclusion != null && r.conclusion!.isNotEmpty)
+                        if (r.sharedWithPatient) ...[
+                          if (r.viaResult != null) Text('VIA : ${r.viaResult}'),
+                          if (r.viliResult != null) Text('VILI : ${r.viliResult}'),
+                          if (r.conclusion != null && r.conclusion!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text('${context.t('specialist_conclusion')} : ${r.conclusion}'),
+                              ),
+                            ),
+                        ] else if (r.status == ScreeningStatus.depiste ||
+                            r.status == ScreeningStatus.oriente ||
+                            r.status == ScreeningStatus.valide)
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text('${context.t('specialist_conclusion')} : ${r.conclusion}'),
+                            child: Text(
+                              context.t('clinical_details_confidential'),
+                              style: TextStyle(color: Colors.grey.shade600, fontStyle: FontStyle.italic),
                             ),
                           ),
                         if (r.nextAppointmentDate != null)

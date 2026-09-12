@@ -5,6 +5,8 @@ import '../../localization/translator.dart';
 import '../../models/screening_models.dart';
 import '../../services/app_data.dart';
 import '../../widgets/empty_state.dart';
+import '../../models/user_model.dart';
+import '../patient/messaging_screen.dart';
 
 class SpecialistDossiersScreen extends StatelessWidget {
   const SpecialistDossiersScreen({super.key});
@@ -78,11 +80,19 @@ class DossierReviewScreen extends StatefulWidget {
 class _DossierReviewScreenState extends State<DossierReviewScreen> {
   late TextEditingController _conclusion;
   bool _saving = false;
+  late bool _sharedWithPatient;
 
   @override
   void initState() {
     super.initState();
     _conclusion = TextEditingController(text: widget.request.conclusion ?? '');
+    _sharedWithPatient = widget.request.sharedWithPatient;
+  }
+
+  Future<void> _toggleShare(bool value) async {
+    setState(() => _sharedWithPatient = value);
+    widget.request.sharedWithPatient = value;
+    await context.read<AppData>().updateScreeningRequest(widget.request);
   }
 
   @override
@@ -135,7 +145,29 @@ class _DossierReviewScreenState extends State<DossierReviewScreen> {
     final r = widget.request;
     final alreadyValidated = r.status == ScreeningStatus.valide;
     return Scaffold(
-      appBar: AppBar(title: Text(r.patientName)),
+      appBar: AppBar(
+        title: Text(r.patientName),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: context.t('contact_patient'),
+            onPressed: () {
+              AppUser? patient;
+              try {
+                patient = context.read<AppData>().users.firstWhere((u) => u.id == r.patientId);
+              } catch (_) {
+                patient = null;
+              }
+              if (patient == null) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(context.t('patient_not_found'))));
+                return;
+              }
+              Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(peer: patient!)));
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -157,6 +189,22 @@ class _DossierReviewScreenState extends State<DossierReviewScreen> {
               enabled: !alreadyValidated,
               decoration:
                   InputDecoration(labelText: context.t('conclusion'), border: const OutlineInputBorder()),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _sharedWithPatient,
+                onChanged: _toggleShare,
+                title: Text(context.t('share_details_with_patient')),
+                subtitle: Text(context.t('share_details_with_patient_sub'),
+                    style: Theme.of(context).textTheme.bodySmall),
+              ),
             ),
             const SizedBox(height: 16),
             if (!alreadyValidated)

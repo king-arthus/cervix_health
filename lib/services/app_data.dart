@@ -16,6 +16,7 @@ class AppData extends ChangeNotifier {
   static const _kUsers = 'ch_users';
   static const _kRequests = 'ch_requests';
   static const _kMessages = 'ch_messages';
+  static const _kConversationShares = 'ch_conversation_shares';
   static const _kPosts = 'ch_posts';
   static const _kSessionUserId = 'ch_session_user_id';
   static const _kLocale = 'ch_locale';
@@ -67,6 +68,11 @@ class AppData extends ChangeNotifier {
     users = _readList(_kUsers).map((e) => AppUser.fromJson(e)).toList();
     requests = _readList(_kRequests).map((e) => ScreeningRequest.fromJson(e)).toList();
     messages = _readList(_kMessages).map((e) => Message.fromJson(e)).toList();
+    final rawShares = _prefs?.getString(_kConversationShares);
+    if (rawShares != null && rawShares.isNotEmpty) {
+      final decoded = jsonDecode(rawShares) as Map<String, dynamic>;
+      conversationShares = decoded.map((k, v) => MapEntry(k, v.toString()));
+    }
     posts = _readList(_kPosts).map((e) => CommunityPost.fromJson(e)).toList();
   }
 
@@ -83,6 +89,8 @@ class AppData extends ChangeNotifier {
       _prefs?.setString(_kRequests, jsonEncode(requests.map((e) => e.toJson()).toList()));
   Future<void> _saveMessages() async =>
       _prefs?.setString(_kMessages, jsonEncode(messages.map((e) => e.toJson()).toList()));
+  Future<void> _saveConversationShares() async =>
+      _prefs?.setString(_kConversationShares, jsonEncode(conversationShares));
   Future<void> _savePosts() async =>
       _prefs?.setString(_kPosts, jsonEncode(posts.map((e) => e.toJson()).toList()));
 
@@ -276,6 +284,16 @@ class AppData extends ChangeNotifier {
       await _saveMessages();
     }
 
+    final remoteShares = await RealtimeDbService.getAll('conversation_shares', token);
+    if (remoteShares != null) {
+      conversationShares = {};
+      remoteShares.forEach((convId, value) {
+        final patientId = (value as Map)['patientId'];
+        if (patientId != null) conversationShares[convId] = patientId.toString();
+      });
+      await _saveConversationShares();
+    }
+
     final remotePosts = await RealtimeDbService.getAll('community_posts', token);
     if (remotePosts != null) {
       posts = remotePosts.values
@@ -377,11 +395,15 @@ class AppData extends ChangeNotifier {
 
   // ---------------- Messagerie ----------------
 
+  /// Conversations actuellement partagées avec une patiente : { conversationId: patientId }.
+  Map<String, String> conversationShares = {};
+
   Future<void> sendMessage({
     required AppUser sender,
     required String receiverId,
     required String text,
   }) async {
+    final convId = Message.conversationId(sender.id, receiverId);
     final msg = Message(
       id: _uuid.v4(),
       senderId: sender.id,
@@ -389,12 +411,58 @@ class AppData extends ChangeNotifier {
       receiverId: receiverId,
       text: text,
       timestamp: DateTime.now(),
+      sharedWithPatientId: conversationShares[convId],
     );
     messages.add(msg);
     await _saveMessages();
     notifyListeners();
     final token = await _validIdToken();
     if (token != null) await RealtimeDbService.putItem('messages', msg.id, msg.toJson(), token);
+  }
+
+  /// Active ou désactive le partage d'une conversation (entre agent et spécialiste,
+  /// par exemple) avec une patiente donnée. Les messages envoyés APRÈS l'activation
+  /// lui seront visibles ; passer `null` arrête le partage pour les prochains messages.
+  Future<void> setConversationSharing({
+    required String userA,
+    required String userB,
+    required String? patientId,
+  }) async {
+    final convId = Message.conversationId(userA, userB);
+    if (patientId == null) {
+      conversationShares.remove(convId);
+    } else {
+      conversationShares[convId] = patientId;
+    }
+    await _saveConversationShares();
+    notifyListeners();
+    final token = await _validIdToken();
+    if (token != null) {
+      await RealtimeDbService.putItem(
+          'conversation_shares', convId, {'patientId': patientId}, token);
+    }
+  }
+
+  String? sharedPatientIdFor(String userA, String userB) =>
+      conversationShares[Message.conversationId(userA, userB)];
+
+  /// Patientes dont un dossier relie ces deux professionnels (agent + spécialiste),
+  /// utilisé pour proposer une liste pertinente lors du partage d'une conversation.
+  List<AppUser> patientsLinkingProfessionals(String idA, String idB) {
+    final patientIds = requests
+        .where((r) =>
+            (r.agentId == idA || r.agentId == idB) &&
+            (r.specialistId == idA || r.specialistId == idB))
+        .map((r) => r.patientId)
+        .toSet();
+    return users.where((u) => patientIds.contains(u.id)).toList();
+  }
+
+  /// Messages de conversations professionnelles partagées avec cette patiente.
+  List<Message> sharedMessagesForPatient(String patientId) {
+    final list = messages.where((m) => m.sharedWithPatientId == patientId).toList();
+    list.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return list;
   }
 
   List<Message> conversation(String userA, String userB) {

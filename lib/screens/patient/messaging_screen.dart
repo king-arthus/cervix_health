@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../localization/translator.dart';
 import '../../models/user_model.dart';
 import '../../services/app_data.dart';
-
 import '../../widgets/empty_state.dart';
 
 class MessagingScreen extends StatelessWidget {
@@ -63,6 +62,58 @@ class _ChatScreenState extends State<ChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
 
+  bool get _isProfessionalConversation {
+    final me = context.read<AppData>().currentUser;
+    if (me == null) return false;
+    return me.role != UserRole.patient && widget.peer.role != UserRole.patient;
+  }
+
+  Future<void> _openSharingDialog() async {
+    final appData = context.read<AppData>();
+    final me = appData.currentUser;
+    if (me == null) return;
+    final currentPatientId = appData.sharedPatientIdFor(me.id, widget.peer.id);
+    final candidates = appData.patientsLinkingProfessionals(me.id, widget.peer.id);
+
+    await showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(context.t('share_conversation_title'), style: Theme.of(context).textTheme.titleMedium),
+            ),
+            if (candidates.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(context.t('no_linked_patients')),
+              ),
+            ...candidates.map((p) => ListTile(
+                  leading: const Icon(Icons.person_outline),
+                  title: Text(p.fullName),
+                  trailing: currentPatientId == p.id ? const Icon(Icons.check, color: Colors.green) : null,
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    await appData.setConversationSharing(userA: me.id, userB: widget.peer.id, patientId: p.id);
+                  },
+                )),
+            if (currentPatientId != null)
+              ListTile(
+                leading: const Icon(Icons.link_off, color: Colors.red),
+                title: Text(context.t('stop_sharing'), style: const TextStyle(color: Colors.red)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  await appData.setConversationSharing(userA: me.id, userB: widget.peer.id, patientId: null);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _send() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -88,11 +139,39 @@ class _ChatScreenState extends State<ChatScreen> {
     final user = appData.currentUser;
     final messages = user == null ? [] : appData.conversation(user.id, widget.peer.id);
     final dateFormat = DateFormat.Hm(appData.localeCode);
+    final showSharing = _isProfessionalConversation;
+    final sharedPatientId = user == null ? null : appData.sharedPatientIdFor(user.id, widget.peer.id);
+    AppUser? sharedPatient;
+    if (sharedPatientId != null) {
+      try {
+        sharedPatient = appData.users.firstWhere((u) => u.id == sharedPatientId);
+      } catch (_) {}
+    }
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.peer.fullName)),
+      appBar: AppBar(
+        title: Text(widget.peer.fullName),
+        actions: [
+          if (showSharing)
+            IconButton(
+              icon: Icon(sharedPatientId != null ? Icons.share : Icons.share_outlined),
+              tooltip: context.t('share_conversation_title'),
+              onPressed: _openSharingDialog,
+            ),
+        ],
+      ),
       body: Column(
         children: [
+          if (showSharing && sharedPatient != null)
+            Container(
+              width: double.infinity,
+              color: Colors.green.withOpacity(0.12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                '${context.t('sharing_active_with')} ${sharedPatient.fullName}',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
           Expanded(
             child: ListView.builder(
               controller: _scrollController,

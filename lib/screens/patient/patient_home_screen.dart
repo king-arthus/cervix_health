@@ -11,6 +11,7 @@ import 'messaging_screen.dart';
 import 'community_screen.dart';
 import '../profile_screen.dart';
 import '../../widgets/email_verification_banner.dart';
+import 'shared_conversation_screen.dart';
 import '../news_screen.dart';
 import 'dart:convert';
 
@@ -28,6 +29,7 @@ class PatientHomeScreen extends StatelessWidget {
       _ModuleTile(context.t('module_messaging'), Icons.chat_bubble_outline, const MessagingScreen()),
       _ModuleTile(context.t('module_community'), Icons.groups, const CommunityScreen()),
       _ModuleTile(context.t('module_news'), Icons.newspaper, const NewsScreen()),
+      _ModuleTile(context.t('shared_conversation_title'), Icons.forum_outlined, const SharedConversationScreen()),
     ];
 
     return Scaffold(

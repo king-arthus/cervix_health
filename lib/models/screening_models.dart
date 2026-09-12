@@ -46,6 +46,11 @@ class ScreeningRequest {
   DateTime? validationDate;
   // NOTE : l'analyse assistée par IA des images VIA/VILI sera ajoutée ultérieurement.
 
+  /// Contrôle si les détails cliniques (VIA/VILI, observations, conclusion) sont
+  /// visibles par la patiente. Confidentiel par défaut ; activé explicitement par
+  /// l'agent ou le spécialiste depuis leur écran de dossier.
+  bool sharedWithPatient;
+
   ScreeningRequest({
     required this.id,
     required this.patientId,
@@ -63,6 +68,7 @@ class ScreeningRequest {
     this.specialistName,
     this.conclusion,
     this.validationDate,
+    this.sharedWithPatient = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -82,6 +88,7 @@ class ScreeningRequest {
         'specialistName': specialistName,
         'conclusion': conclusion,
         'validationDate': validationDate?.toIso8601String(),
+        'sharedWithPatient': sharedWithPatient,
       };
 
   factory ScreeningRequest.fromJson(Map<String, dynamic> json) => ScreeningRequest(
@@ -104,6 +111,7 @@ class ScreeningRequest {
         specialistName: json['specialistName'],
         conclusion: json['conclusion'],
         validationDate: json['validationDate'] != null ? DateTime.parse(json['validationDate']) : null,
+        sharedWithPatient: json['sharedWithPatient'] == true,
       );
 }
 
@@ -114,6 +122,7 @@ class Message {
   final String receiverId;
   final String text;
   final DateTime timestamp;
+  final String? sharedWithPatientId;
 
   Message({
     required this.id,
@@ -122,6 +131,7 @@ class Message {
     required this.receiverId,
     required this.text,
     required this.timestamp,
+    this.sharedWithPatientId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -131,6 +141,7 @@ class Message {
         'receiverId': receiverId,
         'text': text,
         'timestamp': timestamp.toIso8601String(),
+        'sharedWithPatientId': sharedWithPatientId,
       };
 
   factory Message.fromJson(Map<String, dynamic> json) => Message(
@@ -140,6 +151,7 @@ class Message {
         receiverId: json['receiverId'],
         text: json['text'],
         timestamp: DateTime.parse(json['timestamp']),
+        sharedWithPatientId: json['sharedWithPatientId'],
       );
 
   /// Identifiant unique de la conversation entre deux utilisateurs (ordre indépendant)

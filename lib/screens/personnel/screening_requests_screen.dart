@@ -6,6 +6,7 @@ import '../../models/screening_models.dart';
 import '../../models/user_model.dart';
 import '../../services/app_data.dart';
 import '../../widgets/empty_state.dart';
+import '../patient/messaging_screen.dart';
 
 class ScreeningRequestsScreen extends StatelessWidget {
   const ScreeningRequestsScreen({super.key});
@@ -87,6 +88,7 @@ class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScr
   String? _selectedSpecialistId;
   DateTime? _nextAppointment;
   bool _saving = false;
+  late bool _sharedWithPatient;
 
   static const _resultOptions = ['positif', 'negatif', 'douteux'];
 
@@ -99,6 +101,13 @@ class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScr
     _viliResult = widget.request.viliResult;
     _selectedSpecialistId = widget.request.specialistId;
     _nextAppointment = widget.request.nextAppointmentDate;
+    _sharedWithPatient = widget.request.sharedWithPatient;
+  }
+
+  Future<void> _toggleShare(bool value) async {
+    setState(() => _sharedWithPatient = value);
+    widget.request.sharedWithPatient = value;
+    await context.read<AppData>().updateScreeningRequest(widget.request);
   }
 
   @override
@@ -176,7 +185,29 @@ class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScr
         widget.request.status == ScreeningStatus.oriente;
 
     return Scaffold(
-      appBar: AppBar(title: Text(widget.request.patientName)),
+      appBar: AppBar(
+        title: Text(widget.request.patientName),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline),
+            tooltip: context.t('contact_patient'),
+            onPressed: () {
+              AppUser? patient;
+              try {
+                patient = context.read<AppData>().users.firstWhere((u) => u.id == widget.request.patientId);
+              } catch (_) {
+                patient = null;
+              }
+              if (patient == null) {
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(SnackBar(content: Text(context.t('patient_not_found'))));
+                return;
+              }
+              Navigator.push(context, MaterialPageRoute(builder: (_) => ChatScreen(peer: patient!)));
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -212,6 +243,22 @@ class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScr
               maxLines: 3,
               decoration:
                   InputDecoration(labelText: context.t('observations'), border: const OutlineInputBorder()),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                value: _sharedWithPatient,
+                onChanged: _toggleShare,
+                title: Text(context.t('share_details_with_patient')),
+                subtitle: Text(context.t('share_details_with_patient_sub'),
+                    style: Theme.of(context).textTheme.bodySmall),
+              ),
             ),
             const SizedBox(height: 16),
             ListTile(
