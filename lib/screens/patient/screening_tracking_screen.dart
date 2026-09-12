@@ -75,7 +75,9 @@ class _ScreeningTrackingScreenState extends State<ScreeningTrackingScreen> {
               title: context.t('no_requests_yet'),
               subtitle: context.t('no_requests_yet_sub'),
             )
-          : ListView.builder(
+          : RefreshIndicator(
+              onRefresh: appData.refreshNow,
+              child: ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: requests.length,
               itemBuilder: (context, index) {
@@ -148,6 +150,7 @@ class _ScreeningTrackingScreenState extends State<ScreeningTrackingScreen> {
                   ),
                 );
               },
+            ),
             ),
     );
   }

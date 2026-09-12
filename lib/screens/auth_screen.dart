@@ -312,10 +312,32 @@ class _SignupFormState extends State<_SignupForm> {
           children: [
             _field(_email, 'email', type: TextInputType.emailAddress, email: true),
             _field(_password, 'password'),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(context.t('password_hint'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+              ),
+            ),
             _field(_confirmPassword, 'confirm_password'),
             _field(_firstName, 'first_name'),
             _field(_lastName, 'last_name'),
-            _field(_age, 'age', type: TextInputType.number, numeric: true),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: TextFormField(
+                controller: _age,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: context.t('age'), border: const OutlineInputBorder()),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return context.t('required_field');
+                  final age = int.tryParse(v.trim());
+                  if (age == null) return context.t('invalid_number');
+                  if (widget.role == UserRole.patient && age < 18) return context.t('error_must_be_adult');
+                  return null;
+                },
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: DropdownButtonFormField<String>(

@@ -58,6 +58,24 @@ class _ScreeningRequestScreenState extends State<ScreeningRequestScreen> {
       appBar: AppBar(title: Text(context.t('screening_request_title'))),
       body: Column(
         children: [
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.phone_outlined, size: 16),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: Text(context.t('hospital_list_disclaimer'),
+                        style: Theme.of(context).textTheme.bodySmall)),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: DropdownButtonFormField<String>(

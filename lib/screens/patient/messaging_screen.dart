@@ -24,7 +24,9 @@ class MessagingScreen extends StatelessWidget {
               title: context.t('no_conversations'),
               subtitle: context.t('no_conversations_sub'),
             )
-          : ListView.builder(
+          : RefreshIndicator(
+              onRefresh: appData.refreshNow,
+              child: ListView.builder(
               itemCount: conversations.length,
               itemBuilder: (context, index) {
                 final entry = conversations[index];
@@ -45,6 +47,7 @@ class MessagingScreen extends StatelessWidget {
                   ),
                 );
               },
+            ),
             ),
     );
   }

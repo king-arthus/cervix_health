@@ -32,7 +32,9 @@ class PatientTrackingScreen extends StatelessWidget {
               title: context.t('no_requests_yet'),
               subtitle: context.t('no_requests_yet_sub'),
             )
-          : ListView.builder(
+          : RefreshIndicator(
+              onRefresh: appData.refreshNow,
+              child: ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: tracked.length,
               itemBuilder: (context, index) {
@@ -86,6 +88,7 @@ class PatientTrackingScreen extends StatelessWidget {
                   ),
                 );
               },
+            ),
             ),
     );
   }

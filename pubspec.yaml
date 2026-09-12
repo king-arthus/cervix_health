@@ -15,6 +15,7 @@ dependencies:
   intl: ^0.19.0
   cupertino_icons: ^1.0.6
   image_picker: ^1.1.2
+  file_picker: ^8.1.4
   http: ^1.2.2
   url_launcher: ^6.3.1
   flutter_local_notifications: ^18.0.1
@@ -24,6 +25,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#0F8B8D"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
 
 flutter:
   uses-material-design: true

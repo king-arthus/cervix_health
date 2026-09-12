@@ -39,7 +39,9 @@ class SpecialistTrackingScreen extends StatelessWidget {
               title: context.t('no_dossiers_yet'),
               subtitle: context.t('no_dossiers_yet_sub'),
             )
-          : ListView.builder(
+          : RefreshIndicator(
+              onRefresh: appData.refreshNow,
+              child: ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: dossiers.length,
               itemBuilder: (context, index) {
@@ -100,6 +102,7 @@ class SpecialistTrackingScreen extends StatelessWidget {
                   ),
                 );
               },
+            ),
             ),
     );
   }

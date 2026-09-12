@@ -7,6 +7,7 @@ import '../../models/user_model.dart';
 import '../../services/app_data.dart';
 import '../../widgets/empty_state.dart';
 import '../patient/messaging_screen.dart';
+import '../../widgets/attachments_section.dart';
 
 class ScreeningRequestsScreen extends StatelessWidget {
   const ScreeningRequestsScreen({super.key});
@@ -42,7 +43,9 @@ class ScreeningRequestsScreen extends StatelessWidget {
               title: context.t('no_screening_requests'),
               subtitle: context.t('no_screening_requests_sub'),
             )
-          : ListView.builder(
+          : RefreshIndicator(
+              onRefresh: appData.refreshNow,
+              child: ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: requests.length,
               itemBuilder: (context, index) {
@@ -67,6 +70,7 @@ class ScreeningRequestsScreen extends StatelessWidget {
                   ),
                 );
               },
+            ),
             ),
     );
   }
@@ -244,6 +248,8 @@ class _ScreeningRequestDetailScreenState extends State<ScreeningRequestDetailScr
               decoration:
                   InputDecoration(labelText: context.t('observations'), border: const OutlineInputBorder()),
             ),
+            const SizedBox(height: 20),
+            AttachmentsSection(request: widget.request),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),

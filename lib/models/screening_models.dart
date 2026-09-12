@@ -51,6 +51,11 @@ class ScreeningRequest {
   /// l'agent ou le spécialiste depuis leur écran de dossier.
   bool sharedWithPatient;
 
+  /// Photos ou documents joints (ex. images d'examen VIA/VILI) visibles par
+  /// l'agent et le spécialiste. Limitées en nombre pour ne pas alourdir la
+  /// synchronisation (voir écran d'ajout).
+  List<DossierAttachment> attachments;
+
   ScreeningRequest({
     required this.id,
     required this.patientId,
@@ -69,7 +74,8 @@ class ScreeningRequest {
     this.conclusion,
     this.validationDate,
     this.sharedWithPatient = false,
-  });
+    List<DossierAttachment>? attachments,
+  }) : attachments = attachments ?? [];
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -89,6 +95,7 @@ class ScreeningRequest {
         'conclusion': conclusion,
         'validationDate': validationDate?.toIso8601String(),
         'sharedWithPatient': sharedWithPatient,
+        'attachments': attachments.map((a) => a.toJson()).toList(),
       };
 
   factory ScreeningRequest.fromJson(Map<String, dynamic> json) => ScreeningRequest(
@@ -112,6 +119,10 @@ class ScreeningRequest {
         conclusion: json['conclusion'],
         validationDate: json['validationDate'] != null ? DateTime.parse(json['validationDate']) : null,
         sharedWithPatient: json['sharedWithPatient'] == true,
+        attachments: (json['attachments'] as List?)
+                ?.map((a) => DossierAttachment.fromJson(Map<String, dynamic>.from(a)))
+                .toList() ??
+            [],
       );
 }
 
@@ -159,6 +170,47 @@ class Message {
     final ids = [a, b]..sort();
     return '${ids[0]}_${ids[1]}';
   }
+}
+
+/// Pièce jointe attachée à un dossier de dépistage (photo d'examen VIA/VILI,
+/// document, etc.), encodée en base64. À utiliser avec parcimonie : chaque
+/// pièce jointe alourdit la taille du dossier synchronisé.
+class DossierAttachment {
+  final String id;
+  final String fileName;
+  final String mimeType; // ex. 'image/jpeg', 'application/pdf'
+  final String base64Data;
+  final String addedByName;
+  final DateTime addedAt;
+
+  DossierAttachment({
+    required this.id,
+    required this.fileName,
+    required this.mimeType,
+    required this.base64Data,
+    required this.addedByName,
+    required this.addedAt,
+  });
+
+  bool get isImage => mimeType.startsWith('image/');
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'fileName': fileName,
+        'mimeType': mimeType,
+        'base64Data': base64Data,
+        'addedByName': addedByName,
+        'addedAt': addedAt.toIso8601String(),
+      };
+
+  factory DossierAttachment.fromJson(Map<String, dynamic> json) => DossierAttachment(
+        id: json['id'],
+        fileName: json['fileName'],
+        mimeType: json['mimeType'],
+        base64Data: json['base64Data'],
+        addedByName: json['addedByName'],
+        addedAt: DateTime.parse(json['addedAt']),
+      );
 }
 
 class CommunityPost {

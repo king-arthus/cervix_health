@@ -85,7 +85,7 @@ class _CervixHealthAppState extends State<CervixHealthApp> {
       debugShowCheckedModeBanner: false,
       title: 'Cervix Health',
       theme: ThemeData(
-        colorSchemeSeed: Colors.pink,
+        colorSchemeSeed: const Color(0xFF0F8B8D),
         useMaterial3: true,
         appBarTheme: const AppBarTheme(centerTitle: true),
       ),

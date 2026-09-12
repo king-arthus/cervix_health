@@ -69,7 +69,7 @@ class WelcomeScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.favorite, size: 72, color: Colors.pinkAccent),
+                    const Icon(Icons.health_and_safety_rounded, size: 72, color: Color(0xFF0F8B8D)),
                     const SizedBox(height: 24),
                     Text(
                       context.t('welcome_title'),

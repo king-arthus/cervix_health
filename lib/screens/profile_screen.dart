@@ -147,6 +147,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (user.position != null) _infoRow(context, Icons.badge_outlined, user.position!),
             if (user.specialty != null) _infoRow(context, Icons.biotech_outlined, user.specialty!),
           ],
+          const SizedBox(height: 32),
+          Center(
+            child: Column(
+              children: [
+                Text('Cervix Health — v1.0.0',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                const SizedBox(height: 4),
+                Text('Application créée par BAKTARA DIDINA ARTHUS',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+              ],
+            ),
+          ),
         ],
       ),
     );

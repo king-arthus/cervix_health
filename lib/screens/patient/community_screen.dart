@@ -65,7 +65,9 @@ class _CommunityScreenState extends State<CommunityScreen> {
                     title: context.t('no_posts_yet'),
                     subtitle: context.t('no_posts_yet_sub'),
                   )
-                : ListView.builder(
+                : RefreshIndicator(
+                    onRefresh: appData.refreshNow,
+                    child: ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount: posts.length,
                     itemBuilder: (context, index) {
@@ -94,6 +96,7 @@ class _CommunityScreenState extends State<CommunityScreen> {
                         ),
                       );
                     },
+                  ),
                   ),
           ),
         ],

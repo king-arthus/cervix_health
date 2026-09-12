@@ -7,6 +7,7 @@ import '../../services/app_data.dart';
 import '../../widgets/empty_state.dart';
 import '../../models/user_model.dart';
 import '../patient/messaging_screen.dart';
+import '../../widgets/attachments_section.dart';
 
 class SpecialistDossiersScreen extends StatelessWidget {
   const SpecialistDossiersScreen({super.key});
@@ -39,7 +40,9 @@ class SpecialistDossiersScreen extends StatelessWidget {
               title: context.t('no_dossiers_yet'),
               subtitle: context.t('no_dossiers_yet_sub'),
             )
-          : ListView.builder(
+          : RefreshIndicator(
+              onRefresh: appData.refreshNow,
+              child: ListView.builder(
               padding: const EdgeInsets.all(12),
               itemCount: dossiers.length,
               itemBuilder: (context, index) {
@@ -64,6 +67,7 @@ class SpecialistDossiersScreen extends StatelessWidget {
                   ),
                 );
               },
+            ),
             ),
     );
   }
@@ -180,6 +184,8 @@ class _DossierReviewScreenState extends State<DossierReviewScreen> {
             _infoRow(context.t('observations'), (r.observations?.isNotEmpty ?? false) ? r.observations! : '-'),
             _infoRow(context.t('personal_info'), '${r.patientName} — ${r.hospital}'),
             if (r.agentName != null) _infoRow(context.t('module_screening_request'), r.agentName!),
+            const SizedBox(height: 16),
+            AttachmentsSection(request: r),
             const Divider(height: 40),
             Text(context.t('my_conclusion'), style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 12),
