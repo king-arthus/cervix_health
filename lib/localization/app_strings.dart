@@ -592,6 +592,7 @@ class AppStrings {
       'delete_account_type_confirm': 'اكتب',
       'delete_confirm_word': 'حذف',
       'delete_account_confirm_button': 'حذف نهائيًا',
+      'error_reauth_required': 'لأسباب أمنية، يرجى تسجيل الخروج ثم تسجيل الدخول مرة أخرى قبل حذف حسابك.',
       'cancel': 'إلغاء',
     },
   };
