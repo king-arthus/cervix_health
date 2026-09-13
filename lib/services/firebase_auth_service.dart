@@ -171,6 +171,52 @@ class FirebaseAuthService {
     }
   }
 
+  /// Supprime définitivement le compte Firebase Authentication associé à ce jeton.
+  static Future<AuthResult> deleteAccount(String idToken) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_base:delete?key=$firebaseWebApiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'idToken': idToken}),
+      );
+      if (res.statusCode == 200) {
+        return AuthResult(success: true);
+      }
+      final data = jsonDecode(res.body);
+      final rawMessage = data['error']?['message']?.toString();
+      return AuthResult(
+        success: false,
+        errorKey: rawMessage == 'CREDENTIAL_TOO_OLD_LOGIN_AGAIN' ? 'error_reauth_required' : 'generic_error',
+        debugMessage: 'HTTP ${res.statusCode} — ${rawMessage ?? data.toString()}',
+      );
+    } catch (e) {
+      return AuthResult(success: false, errorKey: 'generic_error', debugMessage: 'Exception : $e');
+    }
+  }
+
+  /// Supprime définitivement le compte Firebase associé à ce idToken.
+  static Future<AuthResult> deleteAccount(String idToken) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_base:delete?key=$firebaseWebApiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'idToken': idToken}),
+      );
+      if (res.statusCode == 200) {
+        return AuthResult(success: true);
+      }
+      final data = jsonDecode(res.body);
+      final rawMessage = data['error']?['message']?.toString();
+      return AuthResult(
+        success: false,
+        errorKey: _mapError(rawMessage),
+        debugMessage: 'HTTP ${res.statusCode} — ${rawMessage ?? data.toString()}',
+      );
+    } catch (e) {
+      return AuthResult(success: false, errorKey: 'generic_error', debugMessage: 'Exception : $e');
+    }
+  }
+
   /// Utilise le refresh token pour obtenir un nouveau idToken valide
   /// (les idToken Firebase expirent au bout d'une heure).
   static Future<AuthResult> refreshIdToken(String refreshToken) async {

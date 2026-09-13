@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../localization/translator.dart';
 import '../models/user_model.dart';
 import '../services/app_data.dart';
+import 'welcome_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -37,6 +38,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final confirmController = TextEditingController();
+    bool confirmEnabled = false;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(context.t('delete_account_title')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(context.t('delete_account_warning')),
+              const SizedBox(height: 16),
+              Text('${context.t('delete_account_type_confirm')} ${context.t('delete_confirm_word')}',
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: confirmController,
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+                onChanged: (v) => setDialogState(
+                    () => confirmEnabled = v.trim().toUpperCase() == context.t('delete_confirm_word').toUpperCase()),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(context.t('cancel'))),
+            TextButton(
+              onPressed: confirmEnabled ? () => Navigator.pop(ctx, true) : null,
+              child: Text(context.t('delete_account_confirm_button'),
+                  style: const TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _loading = true);
+    final result = await context.read<AppData>().deleteAccount();
+    setState(() => _loading = false);
+    if (!mounted) return;
+
+    if (result.success) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        (route) => false,
+      );
+    } else {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.t(result.errorKey ?? 'generic_error'))));
     }
   }
 
@@ -156,6 +213,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 4),
                 Text('Application créée par BAKTARA DIDINA ARTHUS',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey)),
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: _loading ? null : _confirmDeleteAccount,
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey.shade500),
+                  child: Text(context.t('delete_my_account'), style: const TextStyle(fontSize: 12)),
+                ),
               ],
             ),
           ),

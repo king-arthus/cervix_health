@@ -219,6 +219,27 @@ class AppData extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Supprime définitivement le compte de l'utilisateur connecté : le compte
+  /// Firebase Authentication (email/mot de passe) et son profil dans la base
+  /// partagée. Les dossiers déjà partagés avec des professionnels de santé
+  /// (demandes de dépistage, messages) ne sont pas effacés rétroactivement.
+  Future<({bool success, String? errorKey})> deleteAccount() async {
+    final user = currentUser;
+    final token = await _validIdToken();
+    if (user == null || token == null) {
+      return (success: false, errorKey: 'generic_error');
+    }
+    final result = await FirebaseAuthService.deleteAccount(token);
+    if (!result.success) {
+      return (success: false, errorKey: result.errorKey ?? 'generic_error');
+    }
+    await RealtimeDbService.deleteItem('users', user.id, token);
+    users.removeWhere((u) => u.id == user.id);
+    await _saveUsers();
+    await logout();
+    return (success: true, errorKey: null);
+  }
+
   List<AppUser> get agentList => users.where((u) => u.role == UserRole.agent).toList();
   List<AppUser> get specialisteList => users.where((u) => u.role == UserRole.specialiste).toList();
   // Alias conservé pour compatibilité : les patientes recherchent des agents pour l'orientation.

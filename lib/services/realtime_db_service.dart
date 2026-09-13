@@ -51,4 +51,15 @@ class RealtimeDbService {
       return false;
     }
   }
+
+  /// Supprime un nœud (ex. le profil d'un utilisateur qui supprime son compte).
+  static Future<bool> deleteItem(String collection, String id, String idToken) async {
+    try {
+      final uri = Uri.parse('$firebaseDatabaseUrl/$collection/$id.json?auth=$idToken');
+      final res = await http.delete(uri);
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
 }

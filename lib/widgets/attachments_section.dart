@@ -33,8 +33,8 @@ class _AttachmentsSectionState extends State<AttachmentsSection> {
     try {
       final file = await _imagePicker.pickImage(
         source: source,
-        maxWidth: 1024,
-        imageQuality: 65,
+        maxWidth: 2048,
+        imageQuality: 92,
       );
       if (file == null) return;
       setState(() => _busy = true);
