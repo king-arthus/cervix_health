@@ -33,6 +33,16 @@ jobs:
             flutter create --platforms=android --org com.cervixhealth .
           fi
 
+      - name: Vérifier/ajouter la permission INTERNET (requise en release)
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if ! grep -q "android.permission.INTERNET" "$MANIFEST"; then
+            sed -i '0,/<manifest[^>]*>/s//&\n    <uses-permission android:name="android.permission.INTERNET" \/>/' "$MANIFEST"
+          fi
+          sed -i 's/android:label="cervix_health"/android:label="Cervix Health"/' "$MANIFEST"
+          echo "--- AndroidManifest.xml (début) ---"
+          head -n 10 "$MANIFEST"
+
       - name: Activer le "core library desugaring" requis par les notifications
         run: |
           python3 - <<'PYEOF'
@@ -61,23 +71,37 @@ jobs:
               else:
                   content += '\n\ndependencies {\n    ' + dep + '\n}\n'
 
+          # file_picker exige un compileSdk >= 36 : on force cette valeur plutôt
+          # que de dépendre de la valeur par défaut fournie par Flutter.
+          if kotlin:
+              content = re.sub(r'compileSdk\s*=\s*flutter\.compileSdkVersion', 'compileSdk = 36', content)
+              if 'compileSdk = 36' not in content:
+                  content = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', content)
+          else:
+              content = re.sub(r'compileSdkVersion\s+flutter\.compileSdkVersion', 'compileSdkVersion 36', content)
+              if 'compileSdkVersion 36' not in content:
+                  content = re.sub(r'compileSdkVersion\s+\d+', 'compileSdkVersion 36', content)
+
           with open(path, "w") as f:
               f.write(content)
           print(f"Patched {path}")
           PYEOF
-          echo "--- Contenu final de build.gradle(.kts) ---"
-          cat android/app/build.gradle.kts 2>/dev/null || cat android/app/build.gradle
+          echo "--- compileSdk actuel ---"
+          grep -i "compileSdk" android/app/build.gradle.kts 2>/dev/null || grep -i "compileSdk" android/app/build.gradle
+
+      - name: Installer les dépendances du projet
+        run: flutter pub get
+
+      - name: Générer l'icône personnalisée de l'application
+        run: dart run flutter_launcher_icons
 
       - name: Enregistrer le dossier Android généré/modifié dans le dépôt
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add android
-          git diff --cached --quiet || git commit -m "chore: generate/patch native Android project [skip ci]"
+          git diff --cached --quiet || git commit -m "chore: generate/patch native Android project + app icon [skip ci]"
           git push || true
-
-      - name: Installer les dépendances du projet
-        run: flutter pub get
 
       - name: Compiler l'APK (release)
         run: flutter build apk --release
