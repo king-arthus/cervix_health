@@ -43,54 +43,78 @@ jobs:
           echo "--- AndroidManifest.xml (début) ---"
           head -n 10 "$MANIFEST"
 
-      - name: Activer le "core library desugaring" requis par les notifications
+      - name: Corriger le build.gradle (desugaring + compileSdk 36 pour file_picker)
         run: |
           python3 - <<'PYEOF'
-          import re
+          import os
 
-          path = "android/app/build.gradle.kts"
-          try:
-              with open(path) as f:
-                  content = f.read()
+          path_kts = "android/app/build.gradle.kts"
+          path_groovy = "android/app/build.gradle"
+          if os.path.exists(path_kts):
+              path = path_kts
               kotlin = True
-          except FileNotFoundError:
-              path = "android/app/build.gradle"
-              with open(path) as f:
-                  content = f.read()
+          else:
+              path = path_groovy
               kotlin = False
 
-          if "CoreLibraryDesugaringEnabled" not in content:
-              flag = "isCoreLibraryDesugaringEnabled = true" if kotlin else "coreLibraryDesugaringEnabled true"
-              content = re.sub(r'(compileOptions\s*\{)', r'\1\n        ' + flag, content, count=1)
+          with open(path) as f:
+              content = f.read()
 
-          if "coreLibraryDesugaring" not in content or "desugar_jdk_libs" not in content:
-              dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")' if kotlin \
-                  else "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
-              if re.search(r'dependencies\s*\{', content):
-                  content = re.sub(r'(dependencies\s*\{)', r'\1\n    ' + dep, content, count=1)
+          MARKER = "// CERVIX_HEALTH_CI_PATCH"
+          if MARKER not in content:
+              if kotlin:
+                  lines = [
+                      "",
+                      MARKER,
+                      "android {",
+                      "    compileSdk = 36",
+                      "    compileOptions {",
+                      "        isCoreLibraryDesugaringEnabled = true",
+                      "    }",
+                      "}",
+                      "",
+                      "dependencies {",
+                      '    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")',
+                      "}",
+                      "",
+                  ]
               else:
-                  content += '\n\ndependencies {\n    ' + dep + '\n}\n'
-
-          # file_picker exige un compileSdk >= 36 : on force cette valeur plutôt
-          # que de dépendre de la valeur par défaut fournie par Flutter.
-          if kotlin:
-              content = re.sub(r'compileSdk\s*=\s*flutter\.compileSdkVersion', 'compileSdk = 36', content)
-              if 'compileSdk = 36' not in content:
-                  content = re.sub(r'compileSdk\s*=\s*\d+', 'compileSdk = 36', content)
+                  lines = [
+                      "",
+                      MARKER,
+                      "android {",
+                      "    compileSdkVersion 36",
+                      "    compileOptions {",
+                      "        coreLibraryDesugaringEnabled true",
+                      "    }",
+                      "}",
+                      "",
+                      "dependencies {",
+                      "    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'",
+                      "}",
+                      "",
+                  ]
+              content += "\n".join(lines)
+              with open(path, "w") as f:
+                  f.write(content)
+              print("Patched (appended) " + path)
           else:
-              content = re.sub(r'compileSdkVersion\s+flutter\.compileSdkVersion', 'compileSdkVersion 36', content)
-              if 'compileSdkVersion 36' not in content:
-                  content = re.sub(r'compileSdkVersion\s+\d+', 'compileSdkVersion 36', content)
-
-          with open(path, "w") as f:
-              f.write(content)
-          print(f"Patched {path}")
+              print("Already patched, skipping: " + path)
           PYEOF
-          echo "--- compileSdk actuel ---"
-          grep -i "compileSdk" android/app/build.gradle.kts 2>/dev/null || grep -i "compileSdk" android/app/build.gradle
+          echo "--- Contenu final ---"
+          cat android/app/build.gradle.kts 2>/dev/null || cat android/app/build.gradle
 
       - name: Installer les dépendances du projet
         run: flutter pub get
+
+      - name: Forcer un compileSdk/targetSdk récent pour TOUS les modules (app + plugins)
+        run: |
+          PROPS="android/local.properties"
+          touch "$PROPS"
+          grep -q "^flutter.compileSdkVersion=" "$PROPS" || echo "flutter.compileSdkVersion=36" >> "$PROPS"
+          grep -q "^flutter.targetSdkVersion=" "$PROPS" || echo "flutter.targetSdkVersion=36" >> "$PROPS"
+          echo "--- local.properties ---"
+          cat "$PROPS"
 
       - name: Générer l'icône personnalisée de l'application
         run: dart run flutter_launcher_icons
